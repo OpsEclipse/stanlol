@@ -1,0 +1,19 @@
+{
+  "features": [
+    {
+      "name": "Split architecture rules from agent workflow",
+      "status": "done",
+      "notes": "Moved durable system constraints to docs/ARCHITECTURE.md and workflow/process guidance to AGENTS.md."
+    },
+    {
+      "name": "Establish docs reference set",
+      "status": "done",
+      "notes": "Added docs/ARCHITECTURE.md, DB_SCHEMA.md, AGENTS_GUIDE.md, UI_GUIDE.md, API_CONTRACT.md, and TECH_DEBT.md."
+    },
+    {
+      "name": "Add components directory",
+      "status": "done",
+      "notes": "Created a tracked components/ directory and updated docs to reflect that it now exists."
+    }
+  ]
+}
