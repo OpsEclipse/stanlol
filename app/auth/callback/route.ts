@@ -1,21 +1,31 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
-  getUserDb,
-  syncCurrentUserProfile,
-  type AuthenticatedUserProfile,
-} from "../../../lib/db.js";
-
-const SUPABASE_URL_KEY = "NEXT_PUBLIC_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "NEXT_PUBLIC_SUPABASE_ANON_KEY";
+  ACCESS_TOKEN_COOKIE,
+  ACCESS_TOKEN_EXPIRES_AT_COOKIE,
+  applyAuthSession,
+  buildSupabaseAuthUrl,
+  clearCookie,
+  fetchSupabaseAuth,
+  getRequestOrigin,
+  isSecureOrigin,
+  normalizeSessionPayload,
+  readRequiredEnv,
+  REFRESH_TOKEN_COOKIE,
+  setCookie,
+  SUPABASE_ANON_KEY,
+  type AuthSessionPayload,
+} from "../../../lib/auth-session";
 
 export const AUTH_CALLBACK_PATH = "/auth/callback";
 export const DEFAULT_AUTH_SUCCESS_PATH = "/workspace";
 export const AUTH_CALLBACK_ERROR_PARAM = "authError";
 export const PKCE_CODE_VERIFIER_COOKIE = "stanlol-pkce-code-verifier";
-export const ACCESS_TOKEN_COOKIE = "stanlol-access-token";
-export const REFRESH_TOKEN_COOKIE = "stanlol-refresh-token";
-export const ACCESS_TOKEN_EXPIRES_AT_COOKIE = "stanlol-access-token-expires-at";
+export {
+  ACCESS_TOKEN_COOKIE,
+  ACCESS_TOKEN_EXPIRES_AT_COOKIE,
+  REFRESH_TOKEN_COOKIE,
+} from "../../../lib/auth-session";
 
 const SUPPORTED_OAUTH_PROVIDERS = new Set(["google"]);
 const SUPPORTED_EMAIL_OTP_TYPES = new Set([
@@ -26,39 +36,6 @@ const SUPPORTED_EMAIL_OTP_TYPES = new Set([
   "recovery",
   "signup",
 ]);
-
-interface AuthSessionPayload {
-  accessToken: string;
-  expiresAt: string | null;
-  refreshToken: string | null;
-}
-
-function readRequiredEnv(name: string): string {
-  const value = process.env[name]?.trim();
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-
-  return value;
-}
-
-function getRequestOrigin(request: Request): string {
-  const url = new URL(request.url);
-  const forwardedHost = request.headers.get("x-forwarded-host")?.trim();
-  const forwardedProto = request.headers.get("x-forwarded-proto")?.trim();
-
-  if (!forwardedHost) {
-    return url.origin;
-  }
-
-  const protocol = forwardedProto || url.protocol.replace(/:$/, "");
-  return `${protocol}://${forwardedHost}`;
-}
-
-function buildSupabaseUrl(pathname: string): URL {
-  return new URL(pathname, readRequiredEnv(SUPABASE_URL_KEY));
-}
 
 function sanitizeNextPath(value: string | null, fallback = DEFAULT_AUTH_SUCCESS_PATH): string {
   const candidate = value?.trim() || fallback;
@@ -112,45 +89,6 @@ function createPkceCodeChallenge(codeVerifier: string): string {
   return createHash("sha256").update(codeVerifier).digest("base64url");
 }
 
-function isSecureOrigin(origin: string): boolean {
-  return new URL(origin).protocol === "https:";
-}
-
-function setCookie(
-  response: NextResponse,
-  name: string,
-  value: string,
-  options: {
-    expires?: Date;
-    httpOnly?: boolean;
-    maxAge?: number;
-    secure: boolean;
-  },
-): void {
-  response.cookies.set({
-    expires: options.expires,
-    httpOnly: options.httpOnly ?? true,
-    maxAge: options.maxAge,
-    name,
-    path: "/",
-    sameSite: "lax",
-    secure: options.secure,
-    value,
-  });
-}
-
-function clearCookie(response: NextResponse, name: string, secure: boolean): void {
-  response.cookies.set({
-    expires: new Date(0),
-    httpOnly: true,
-    name,
-    path: "/",
-    sameSite: "lax",
-    secure,
-    value: "",
-  });
-}
-
 function redirectToPath(request: Request, path: string): NextResponse {
   return NextResponse.redirect(new URL(path, getRequestOrigin(request)));
 }
@@ -167,79 +105,12 @@ function redirectToFailure(request: Request, code: string): NextResponse {
   return response;
 }
 
-function normalizeSessionPayload(payload: unknown): AuthSessionPayload {
-  if (typeof payload !== "object" || payload === null) {
-    throw new Error("Supabase auth session payload was not an object.");
-  }
-
-  const session = payload as Record<string, unknown>;
-  const accessToken =
-    typeof session.access_token === "string" ? session.access_token.trim() : "";
-  const refreshToken =
-    typeof session.refresh_token === "string" ? session.refresh_token.trim() : null;
-  const expiresIn =
-    typeof session.expires_in === "number" && Number.isFinite(session.expires_in)
-      ? session.expires_in
-      : null;
-
-  if (!accessToken) {
-    throw new Error("Supabase auth session payload did not include an access token.");
-  }
-
-  return {
-    accessToken,
-    expiresAt:
-      expiresIn === null ? null : new Date(Date.now() + expiresIn * 1_000).toISOString(),
-    refreshToken: refreshToken || null,
-  };
-}
-
-function normalizeAuthenticatedUser(payload: unknown): AuthenticatedUserProfile {
-  if (typeof payload !== "object" || payload === null) {
-    throw new Error("Supabase auth user payload was not an object.");
-  }
-
-  const user = payload as Record<string, unknown>;
-  const id = typeof user.id === "string" ? user.id.trim() : "";
-
-  if (!id) {
-    throw new Error("Supabase auth user payload did not include a user id.");
-  }
-
-  const email = typeof user.email === "string" ? user.email : null;
-  const userMetadata =
-    typeof user.user_metadata === "object" &&
-    user.user_metadata !== null &&
-    !Array.isArray(user.user_metadata)
-      ? (user.user_metadata as Record<string, unknown>)
-      : null;
-
-  return {
-    email,
-    id,
-    user_metadata: userMetadata,
-  };
-}
-
-async function fetchSupabaseAuth(
-  input: URL,
-  init: RequestInit,
-): Promise<Record<string, unknown>> {
-  const response = await fetch(input, init);
-
-  if (!response.ok) {
-    throw new Error(`Supabase auth request failed with status ${response.status}.`);
-  }
-
-  return (await response.json()) as Record<string, unknown>;
-}
-
 async function exchangeCodeForSession(
   authCode: string,
   codeVerifier: string,
 ): Promise<AuthSessionPayload> {
   const response = await fetchSupabaseAuth(
-    new URL("/auth/v1/token?grant_type=pkce", buildSupabaseUrl("/")),
+    new URL("/auth/v1/token?grant_type=pkce", buildSupabaseAuthUrl("/")),
     {
       body: JSON.stringify({
         auth_code: authCode,
@@ -260,7 +131,7 @@ async function verifyTokenHash(
   tokenHash: string,
   type: string,
 ): Promise<AuthSessionPayload> {
-  const response = await fetchSupabaseAuth(buildSupabaseUrl("/auth/v1/verify"), {
+  const response = await fetchSupabaseAuth(buildSupabaseAuthUrl("/auth/v1/verify"), {
     body: JSON.stringify({
       token_hash: tokenHash,
       type,
@@ -275,47 +146,14 @@ async function verifyTokenHash(
   return normalizeSessionPayload(response);
 }
 
-async function fetchAuthenticatedUser(accessToken: string): Promise<AuthenticatedUserProfile> {
-  const response = await fetchSupabaseAuth(buildSupabaseUrl("/auth/v1/user"), {
-    headers: {
-      apikey: readRequiredEnv(SUPABASE_ANON_KEY),
-      authorization: `Bearer ${accessToken}`,
-    },
-    method: "GET",
-  });
-
-  return normalizeAuthenticatedUser(response);
-}
-
 async function completeAuth(
   request: Request,
   session: AuthSessionPayload,
   nextPath: string,
 ): Promise<NextResponse> {
   const secure = isSecureOrigin(getRequestOrigin(request));
-  const user = await fetchAuthenticatedUser(session.accessToken);
-  const userDb = getUserDb(session.accessToken);
-
-  await syncCurrentUserProfile(userDb, user);
-
   const response = redirectToPath(request, nextPath);
-
-  setCookie(response, ACCESS_TOKEN_COOKIE, session.accessToken, {
-    expires: session.expiresAt ? new Date(session.expiresAt) : undefined,
-    secure,
-  });
-
-  if (session.refreshToken) {
-    setCookie(response, REFRESH_TOKEN_COOKIE, session.refreshToken, {
-      secure,
-    });
-  }
-
-  if (session.expiresAt) {
-    setCookie(response, ACCESS_TOKEN_EXPIRES_AT_COOKIE, session.expiresAt, {
-      secure,
-    });
-  }
+  await applyAuthSession(response, request, session);
 
   clearCookie(response, PKCE_CODE_VERIFIER_COOKIE, secure);
 
@@ -331,7 +169,7 @@ function startOAuthFlow(request: Request, provider: string, nextPath: string): N
 
   callbackUrl.searchParams.set("next", nextPath);
 
-  const authorizeUrl = buildSupabaseUrl("/auth/v1/authorize");
+  const authorizeUrl = buildSupabaseAuthUrl("/auth/v1/authorize");
 
   authorizeUrl.searchParams.set("provider", provider);
   authorizeUrl.searchParams.set("redirect_to", callbackUrl.toString());

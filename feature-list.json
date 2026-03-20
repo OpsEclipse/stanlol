@@ -1537,7 +1537,7 @@
       "id": "F220",
       "name": "Implement POST /api/dev/auto-login route",
       "description": "Create the development-only route for local seeded-account auto-login.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F006", "F007", "F039", "F040"]
     },
     {

@@ -49,3 +49,4 @@ Paused orchestration — only ready features are migration-backed (`F018`, `F021
 ✓ Feature #F135 Log generation failure audit events — done
 ✓ Feature #F091 Create drafts migration — done
 ✓ Feature #F067 Create thread list query — done
+✓ Feature #F220 Implement POST /api/dev/auto-login route — done
