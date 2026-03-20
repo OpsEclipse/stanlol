@@ -2,12 +2,16 @@ import { generateText, type OpenAiMessage } from "../ai";
 
 export const AGENT_PROMPT_VERSION = "draft-orchestration-v1";
 export const MAX_AGENT_STEPS = 2;
+export const MAX_GENERATION_STEPS = 1;
 export const REVISION_DECISION_OUTPUT_VERSION = "revision-decision-v1";
 
 export type RevisionDecisionAction = "keep" | "revise";
 export type DraftOperation = "create" | "retain" | "revise";
 export type DraftResultStatus = "generated" | "unchanged";
-export type AgentTerminationReason = "draft-generated" | "revision-not-requested";
+export type AgentTerminationReason =
+  | "draft-created"
+  | "draft-revised"
+  | "revision-not-requested";
 
 export interface AgentVoiceContext {
   instructions?: string | null;
@@ -45,6 +49,13 @@ export interface DraftGenerationResult {
   model: string;
   operation: Exclude<DraftOperation, "retain">;
   responseId: string;
+  termination: AgentTermination;
+}
+
+export interface AgentTermination {
+  maxSteps: number;
+  reason: AgentTerminationReason;
+  stepsTaken: number;
 }
 
 export interface DraftOrchestrationResult {
@@ -55,11 +66,7 @@ export interface DraftOrchestrationResult {
   promptVersion: typeof AGENT_PROMPT_VERSION;
   responseId: string | null;
   status: DraftResultStatus;
-  termination: {
-    maxSteps: typeof MAX_AGENT_STEPS;
-    reason: AgentTerminationReason;
-    stepsTaken: number;
-  };
+  termination: AgentTermination;
 }
 
 export class AgentError extends Error {
@@ -84,7 +91,7 @@ const DRAFT_GENERATION_INSTRUCTIONS = [
   "- Use the selected voice when provided.",
   "- Treat attached image details as supporting context only.",
   "- Return only the final draft text with no analysis or markdown.",
-  "Termination condition: produce exactly one draft and stop.",
+  "Termination condition: return exactly one completed draft and stop immediately.",
 ].join("\n");
 
 const REVISION_DECISION_INSTRUCTIONS = [
@@ -212,6 +219,24 @@ function getGenerateTextImplementation(dependencies: AgentDependencies): typeof 
   return dependencies.generateText ?? generateText;
 }
 
+function createTermination(
+  reason: AgentTerminationReason,
+  stepsTaken: number,
+  maxSteps: number,
+): AgentTermination {
+  return {
+    maxSteps,
+    reason,
+    stepsTaken,
+  };
+}
+
+function getGenerationTerminationReason(
+  operation: Exclude<DraftOperation, "retain">,
+): Extract<AgentTerminationReason, "draft-created" | "draft-revised"> {
+  return operation === "create" ? "draft-created" : "draft-revised";
+}
+
 function buildRevisionDecisionPrompt(request: DraftOrchestrationRequest): string {
   const currentDraft = normalizeOptionalText(request.currentDraft);
 
@@ -325,7 +350,11 @@ function buildDraftGenerationPrompt(
       "- Return only the final LinkedIn draft text.",
       "- Keep the draft grounded in the conversation.",
       "- Do not include notes, explanations, headings, or quotation marks.",
-      "- Stop after producing a single draft.",
+      `- Termination condition: ${
+        operation === "create"
+          ? "after producing the first active draft, stop."
+          : "after revising the current active draft once, stop."
+      }`,
     ].join("\n"),
   );
 
@@ -383,6 +412,11 @@ export async function generateDraft(
       model: result.model,
       operation,
       responseId: result.id,
+      termination: createTermination(
+        getGenerationTerminationReason(operation),
+        1,
+        MAX_GENERATION_STEPS,
+      ),
     };
   } catch (error) {
     if (error instanceof AgentError) {
@@ -422,14 +456,10 @@ export async function orchestrateDraft(
         operation: "retain",
         promptVersion: AGENT_PROMPT_VERSION,
         responseId: null,
-        status: "unchanged",
-        termination: {
-          maxSteps: MAX_AGENT_STEPS,
-          reason: "revision-not-requested",
-          stepsTaken,
-        },
-      };
-    }
+      status: "unchanged",
+      termination: createTermination("revision-not-requested", stepsTaken, MAX_AGENT_STEPS),
+    };
+  }
   }
 
   const operation: Exclude<DraftOperation, "retain"> = currentDraft ? "revise" : "create";
@@ -451,10 +481,10 @@ export async function orchestrateDraft(
     promptVersion: AGENT_PROMPT_VERSION,
     responseId: generationResult.responseId,
     status: "generated",
-    termination: {
-      maxSteps: MAX_AGENT_STEPS,
-      reason: "draft-generated",
+    termination: createTermination(
+      generationResult.termination.reason,
       stepsTaken,
-    },
+      MAX_AGENT_STEPS,
+    ),
   };
 }

@@ -900,7 +900,7 @@
       "id": "F129",
       "name": "Add explicit agent termination conditions",
       "description": "Ensure every generation flow has a clear stop condition.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F005"]
     },
     {
