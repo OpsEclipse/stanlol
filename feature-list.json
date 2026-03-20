@@ -193,7 +193,7 @@
       "id": "F028",
       "name": "Add authenticated workspace redirect",
       "description": "Send authenticated users directly to the main workspace experience.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F027"]
     },
     {

@@ -80,3 +80,4 @@ Blocked Feature #F177 Persist imported sample rows — added `lib/voice-samples.
 ✓ Feature #F125 Build conversation context prompt — done
 ✓ Feature #F035 Add auth error messaging — done
 ✓ Feature #F027 Add signed-out route protection — done
+✓ Feature #F028 Add authenticated workspace redirect — done
