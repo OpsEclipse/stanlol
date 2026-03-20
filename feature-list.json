@@ -284,14 +284,14 @@
       "id": "F041",
       "name": "Create full-height workspace frame",
       "description": "Build the primary authenticated layout with a full-height focused workspace.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F028"]
     },
     {
       "id": "F042",
       "name": "Create minimal left sidebar layout",
       "description": "Build the visually quiet sidebar for history, profile, and settings entry points.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F041"]
     },
     {

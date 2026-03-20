@@ -38,7 +38,7 @@ export function ThreadHistoryList({
       <section
         aria-live="polite"
         className={joinClassNames(
-          "rounded-[1.5rem] border border-white/10 bg-black/20 p-5 text-sm text-stone-300 shadow-lg shadow-black/20",
+          "rounded-[1.35rem] border border-white/10 bg-white/[0.03] p-5 text-sm text-stone-300 shadow-lg shadow-black/10 backdrop-blur-sm",
           className,
         )}
       >
@@ -51,18 +51,18 @@ export function ThreadHistoryList({
     <section
       aria-label="Thread history"
       className={joinClassNames(
-        "rounded-[1.5rem] border border-white/10 bg-black/20 p-3 shadow-lg shadow-black/20",
+        "rounded-[1.35rem] border border-white/10 bg-white/[0.03] p-3 shadow-lg shadow-black/10 backdrop-blur-sm",
         className,
       )}
     >
       <div className="flex items-center justify-between px-2 pb-3">
         <div>
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-amber-200/75">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400">
             History
           </p>
-          <h2 className="mt-2 text-lg font-semibold text-white">Recent activity</h2>
+          <h2 className="mt-2 text-base font-semibold text-white">Recent activity</h2>
         </div>
-        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-[0.24em] text-stone-300">
+        <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-[0.24em] text-stone-300">
           {threads.length} threads
         </span>
       </div>
@@ -82,10 +82,10 @@ export function ThreadHistoryList({
                 type="button"
                 data-active={thread.isActive ? "true" : undefined}
                 className={joinClassNames(
-                  "flex w-full items-start justify-between gap-4 rounded-[1.2rem] border px-4 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300",
+                  "flex w-full items-start justify-between gap-4 rounded-[1.2rem] border px-4 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-200",
                   thread.isActive
-                    ? "border-amber-300/25 bg-amber-200/10 shadow-inner shadow-amber-100/5"
-                    : "border-white/5 bg-white/[0.03] hover:border-white/10 hover:bg-white/[0.05]",
+                    ? "border-white/15 bg-white/[0.06] shadow-inner shadow-white/5"
+                    : "border-white/5 bg-black/20 hover:border-white/10 hover:bg-white/[0.04]",
                 )}
               >
                 <span className="min-w-0">

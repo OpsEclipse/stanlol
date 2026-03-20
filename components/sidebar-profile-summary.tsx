@@ -58,20 +58,20 @@ export function SidebarProfileSummary({
     <section
       aria-label="Current account"
       className={joinClassNames(
-        "rounded-[1.5rem] border border-white/10 bg-black/20 p-4 shadow-lg shadow-black/20",
+        "rounded-[1.35rem] border border-white/10 bg-white/[0.03] p-4 shadow-lg shadow-black/10 backdrop-blur-sm",
         className,
       )}
     >
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-200/10 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-100">
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] border border-white/10 bg-black/20 text-sm font-semibold uppercase tracking-[0.16em] text-stone-100">
           {getMonogram(normalizedDisplayName, normalizedEmail)}
         </div>
         <div className="min-w-0">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-emerald-100/75">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400">
             Account
           </p>
           <p className="mt-2 truncate text-sm font-medium text-white">{primaryLabel}</p>
-          <p className="mt-1 truncate text-xs text-stone-400">{secondaryLabel}</p>
+          <p className="mt-1 truncate text-xs text-stone-500">{secondaryLabel}</p>
         </div>
       </div>
     </section>

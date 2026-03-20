@@ -187,6 +187,30 @@ function findElementsByType(value, type, matches = []) {
   return findElementsByType(value.props.children, type, matches);
 }
 
+function findElementByAriaLabel(value, label) {
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const match = findElementByAriaLabel(entry, label);
+
+      if (match) {
+        return match;
+      }
+    }
+
+    return null;
+  }
+
+  if (!isElementLike(value)) {
+    return null;
+  }
+
+  if (value.props?.["aria-label"] === label) {
+    return value;
+  }
+
+  return findElementByAriaLabel(value.props.children, label);
+}
+
 function getSetCookies(response) {
   if (typeof response.headers.getSetCookie === "function") {
     return response.headers.getSetCookie();
@@ -224,15 +248,31 @@ test("workspace page shows thread activity times in the sidebar history list", a
   const pageModule = await import(pathToFileURL(pageModulePath).href);
   const view = resolveElementTree(await pageModule.default());
   const text = collectText(view).join(" ");
+  const anchors = findElementsByType(view, "a");
   const forms = findElementsByType(view, "form");
+  const main = findElementsByType(view, "main")[0];
+  const focusedWorkspace = findElementByAriaLabel(view, "Focused workspace");
+  const sidebarEntryPoints = findElementByAriaLabel(view, "Sidebar entry points");
+  const workspaceSidebar = findElementByAriaLabel(view, "Workspace sidebar");
   const timeElements = findElementsByType(view, "time");
 
+  assert.ok(main);
+  assert.ok(focusedWorkspace);
+  assert.ok(sidebarEntryPoints);
+  assert.ok(workspaceSidebar);
+  assert.match(main.props.className, /h-\[100dvh\]/);
   assert.match(text, /Account/);
   assert.match(text, /Stan Writer/);
   assert.match(text, /writer@example\.com/);
   assert.match(text, /Conversation history/);
+  assert.match(text, /Full-height workspace frame/);
+  assert.match(text, /Focused center canvas/);
   assert.match(text, /Recent activity/);
   assert.match(text, /Launch announcement angle/);
+  assert.match(text, /Quiet access to history, profile, and settings\./);
+  assert.match(text, /History/);
+  assert.match(text, /Profile/);
+  assert.match(text, /Settings/);
   assert.match(text, /Account settings/);
   assert.match(text, /Profile and access/);
   assert.match(text, /Environment and controls/);
@@ -243,6 +283,9 @@ test("workspace page shows thread activity times in the sidebar history list", a
     forms.some((form) => form.props.action === "/auth/sign-out" && form.props.method === "post"),
     true,
   );
+  assert.equal(anchors.some((anchor) => anchor.props.href === "#thread-history"), true);
+  assert.equal(anchors.some((anchor) => anchor.props.href === "#current-account"), true);
+  assert.equal(anchors.some((anchor) => anchor.props.href === "#workspace-settings"), true);
   assert.equal(timeElements.length, 3);
   for (const timeElement of timeElements) {
     assert.equal(typeof timeElement.props.dateTime, "string");
