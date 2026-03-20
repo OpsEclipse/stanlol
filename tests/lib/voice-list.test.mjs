@@ -249,3 +249,75 @@ test("getVoiceProfile loads one saved voice and returns null when it is missing"
     /Failed to fetch voice profile: permission denied/,
   );
 });
+
+test("assertVoiceProfileOwnership rejects voices the current user does not own", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compileVoiceListFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+  });
+
+  const modulePath = resolve(outputDirectory, "voice-list.js");
+
+  assert.equal(existsSync(modulePath), true);
+
+  const { VOICE_PROFILE_TABLE, assertVoiceProfileOwnership } = await import(pathToFileURL(modulePath).href);
+  let selectOneCall = null;
+
+  await assert.doesNotReject(() =>
+    assertVoiceProfileOwnership(
+      {
+        selectOne: async (table, options) => {
+          selectOneCall = { options, table };
+          return { id: "voice-123" };
+        },
+      },
+      {
+        userId: " user-123 ",
+        voiceId: " voice-123 ",
+      },
+    ),
+  );
+
+  assert.deepEqual(selectOneCall, {
+    options: {
+      columns: ["id"],
+      filters: [
+        { column: "id", operator: "eq", value: "voice-123" },
+        { column: "user_id", operator: "eq", value: "user-123" },
+      ],
+    },
+    table: VOICE_PROFILE_TABLE,
+  });
+
+  await assert.rejects(
+    () =>
+      assertVoiceProfileOwnership(
+        {
+          selectOne: async () => null,
+        },
+        {
+          userId: "user-123",
+          voiceId: "voice-456",
+        },
+      ),
+    /Failed to verify voice ownership: Voice profile was not found for the current user/,
+  );
+
+  await assert.rejects(
+    () =>
+      assertVoiceProfileOwnership(
+        {
+          selectOne: async () => {
+            throw new Error("permission denied");
+          },
+        },
+        {
+          userId: "user-123",
+          voiceId: "voice-123",
+        },
+      ),
+    /Failed to verify voice ownership: permission denied/,
+  );
+});

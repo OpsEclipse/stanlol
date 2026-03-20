@@ -1,4 +1,4 @@
-import type { DbRow, SupabaseDbClient } from "./db.ts";
+import type { DbFilter, DbRow, SupabaseDbClient } from "./db.ts";
 
 export const VOICE_PROFILE_TABLE = "voice_profiles";
 
@@ -21,6 +21,10 @@ export interface GetVoiceProfileOptions {
   voiceId: string;
 }
 
+type VoiceProfileOwnershipRow = DbRow & {
+  id: string;
+};
+
 const voiceProfileColumns = [
   "id",
   "user_id",
@@ -30,6 +34,7 @@ const voiceProfileColumns = [
   "created_at",
   "updated_at",
 ] as const;
+const voiceProfileOwnershipColumns = ["id"] as const;
 
 function readRequiredText(value: string, fieldName: string): string {
   const normalizedValue = value.trim();
@@ -39,6 +44,21 @@ function readRequiredText(value: string, fieldName: string): string {
   }
 
   return normalizedValue;
+}
+
+function buildVoiceOwnershipFilters(options: GetVoiceProfileOptions): DbFilter[] {
+  return [
+    {
+      column: "id",
+      operator: "eq",
+      value: readRequiredText(options.voiceId, "Voice profile voiceId"),
+    },
+    {
+      column: "user_id",
+      operator: "eq",
+      value: readRequiredText(options.userId, "Voice profile userId"),
+    },
+  ];
 }
 
 export async function listVoiceProfiles(
@@ -73,21 +93,29 @@ export async function getVoiceProfile(
   try {
     return await db.selectOne<VoiceProfileRow>(VOICE_PROFILE_TABLE, {
       columns: voiceProfileColumns,
-      filters: [
-        {
-          column: "id",
-          operator: "eq",
-          value: readRequiredText(options.voiceId, "Voice profile voiceId"),
-        },
-        {
-          column: "user_id",
-          operator: "eq",
-          value: readRequiredText(options.userId, "Voice profile userId"),
-        },
-      ],
+      filters: buildVoiceOwnershipFilters(options),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown voice profile fetch error.";
     throw new Error(`Failed to fetch voice profile: ${message}`);
+  }
+}
+
+export async function assertVoiceProfileOwnership(
+  db: SupabaseDbClient,
+  options: GetVoiceProfileOptions,
+): Promise<void> {
+  try {
+    const row = await db.selectOne<VoiceProfileOwnershipRow>(VOICE_PROFILE_TABLE, {
+      columns: voiceProfileOwnershipColumns,
+      filters: buildVoiceOwnershipFilters(options),
+    });
+
+    if (!row) {
+      throw new Error("Voice profile was not found for the current user.");
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown voice ownership error.";
+    throw new Error(`Failed to verify voice ownership: ${message}`);
   }
 }

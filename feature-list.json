@@ -998,7 +998,7 @@
       "id": "F143",
       "name": "Add voice ownership enforcement",
       "description": "Prevent users from reading or mutating voices they do not own.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F141", "F022"]
     },
     {
@@ -1229,7 +1229,7 @@
       "id": "F176",
       "name": "Persist manual import batch record",
       "description": "Store a record of each manual import action for later reference.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F018", "F141"]
     },
     {
