@@ -263,7 +263,7 @@
       "id": "F038",
       "name": "Add local test-account seeding lookup",
       "description": "Provide a development-only path to identify the seeded local test user.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F017", "F021"]
     },
     {
