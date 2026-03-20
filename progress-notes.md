@@ -12,3 +12,4 @@
 - Fixed the clean-environment blocker by adding an `npm test` script with Node's built-in test runner and aligning `init.sh` to use it.
 - Replaced the placeholder backlog with a PRD-derived `feature-list.json` containing 235 atomic, dependency-aware implementation features across auth, workspace, chat, drafts, voices, imports, uploads, APIs, and QA.
 ✓ Feature #F004 Create OpenAI wrapper — done
+✓ Feature #F003 Create Supabase database wrapper — done

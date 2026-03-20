@@ -18,7 +18,7 @@
       "id": "F003",
       "name": "Create Supabase database wrapper",
       "description": "Centralize Supabase access inside `lib/db.ts` for all persistence operations.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F001", "F002"]
     },
     {
