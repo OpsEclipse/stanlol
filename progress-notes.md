@@ -13,3 +13,5 @@
 - Replaced the placeholder backlog with a PRD-derived `feature-list.json` containing 235 atomic, dependency-aware implementation features across auth, workspace, chat, drafts, voices, imports, uploads, APIs, and QA.
 - ✓ Feature #F007 Create request validation helper — done
 - ✓ Feature #F006 Create JSON response helper — done
+✓ Feature #F004 Create OpenAI wrapper — done
+✓ Feature #F003 Create Supabase database wrapper — done

@@ -18,14 +18,14 @@
       "id": "F003",
       "name": "Create Supabase database wrapper",
       "description": "Centralize Supabase access inside `lib/db.ts` for all persistence operations.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F001", "F002"]
     },
     {
       "id": "F004",
       "name": "Create OpenAI wrapper",
       "description": "Centralize model access inside `lib/ai.ts` instead of calling the API directly from routes or components.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F001", "F002"]
     },
     {
