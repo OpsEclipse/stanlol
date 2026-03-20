@@ -4,7 +4,7 @@
       "id": "F001",
       "name": "Create environment configuration module",
       "description": "Add a single source of truth for required runtime environment variables and feature flags.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
