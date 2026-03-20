@@ -25,7 +25,7 @@
       "id": "F004",
       "name": "Create OpenAI wrapper",
       "description": "Centralize model access inside `lib/ai.ts` instead of calling the API directly from routes or components.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F001", "F002"]
     },
     {
