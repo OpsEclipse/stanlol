@@ -352,10 +352,13 @@ function buildDraftGenerationPrompt(
   operation: Exclude<DraftOperation, "retain">,
 ): string {
   const messages = normalizeMessages(request.messages);
+  const latestUserMessage = getLatestUserMessage(messages);
   const currentDraft = normalizeOptionalText(request.currentDraft);
   const sections = [
     `Prompt version: ${AGENT_PROMPT_VERSION}`,
     `Operation: ${operation === "create" ? "Create the first active LinkedIn draft." : "Revise the existing active LinkedIn draft without branching."}`,
+    "Latest user request:",
+    latestUserMessage,
     "Voice context:",
     serializeVoiceContext(request.voice),
     "Attached image context:",

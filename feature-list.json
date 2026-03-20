@@ -123,7 +123,7 @@
       "id": "F018",
       "name": "Create generation audit event table",
       "description": "Persist generation audit records for debugging and product insight.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F003"]
     },
     {
@@ -144,7 +144,7 @@
       "id": "F021",
       "name": "Create user profiles migration",
       "description": "Add the persistent user profile table required for account-level metadata.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003"]
     },
     {
@@ -907,7 +907,7 @@
       "id": "F130",
       "name": "Prevent arbitrary long-running agent loops",
       "description": "Keep the assistant bounded to the product's controlled drafting workflow.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F129"]
     },
     {
