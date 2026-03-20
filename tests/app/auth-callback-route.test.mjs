@@ -39,9 +39,18 @@ function compileRouteFixture(projectRoot) {
   const routeModulePath = resolve(outputDirectory, "app/auth/callback/route.js");
   const compiledRoute = readFileSync(routeModulePath, "utf8")
     .replace('from "next/server";', 'from "next/server.js";')
+    .replace('from "../../../lib/auth-session";', 'from "../../../lib/auth-session.js";')
+    .replace('from "../../../lib/auth-session";', 'from "../../../lib/auth-session.js";')
     .replace('from "../../../lib/db";', 'from "../../../lib/db.js";');
 
   writeFileSync(routeModulePath, compiledRoute);
+
+  const authSessionModulePath = resolve(outputDirectory, "lib/auth-session.js");
+  const compiledAuthSession = readFileSync(authSessionModulePath, "utf8")
+    .replace('from "next/server";', 'from "next/server.js";')
+    .replace('from "./db";', 'from "./db.js";');
+
+  writeFileSync(authSessionModulePath, compiledAuthSession);
 
   return outputDirectory;
 }
@@ -382,6 +391,36 @@ test("GET redirects back to the sign-in screen when the callback payload is inva
     assert.equal(
       response.headers.get("location"),
       `https://stanlol.test/?${AUTH_CALLBACK_ERROR_PARAM}=invalid_auth_callback`,
+    );
+  });
+});
+
+test("GET sanitizes provider callback failures before redirecting back to sign-in", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compileRouteFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+  });
+
+  const routeModule = await import(pathToFileURL(resolve(outputDirectory, "app/auth/callback/route.js")).href);
+  const { AUTH_CALLBACK_ERROR_PARAM, GET } = routeModule;
+
+  await withAuthEnv(async () => {
+    const response = await GET(
+      new Request(
+        "https://stanlol.test/auth/callback?error=access_denied&error_code=oauth_denied&error_description=User%20cancelled%20the%20provider%20screen",
+      ),
+    );
+
+    assert.equal(response.status, 307);
+    assert.equal(
+      response.headers.get("location"),
+      `https://stanlol.test/?${AUTH_CALLBACK_ERROR_PARAM}=auth_provider_failed`,
+    );
+    assert.equal(
+      response.headers.get("location")?.includes("User%20cancelled%20the%20provider%20screen"),
+      false,
     );
   });
 });

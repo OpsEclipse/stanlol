@@ -191,8 +191,15 @@ export async function GET(request: Request): Promise<NextResponse> {
   const nextPath = sanitizeNextPath(url.searchParams.get("next"));
   const provider = url.searchParams.get("provider")?.trim().toLowerCase() ?? null;
   const authCode = url.searchParams.get("code")?.trim() ?? null;
+  const providerError = url.searchParams.get("error")?.trim() ?? null;
+  const providerErrorCode = url.searchParams.get("error_code")?.trim() ?? null;
+  const providerErrorDescription = url.searchParams.get("error_description")?.trim() ?? null;
   const tokenHash = url.searchParams.get("token_hash")?.trim() ?? null;
   const tokenType = url.searchParams.get("type")?.trim().toLowerCase() ?? null;
+
+  if (providerError || providerErrorCode || providerErrorDescription) {
+    return redirectToFailure(request, "auth_provider_failed");
+  }
 
   if (!authCode && !tokenHash && provider) {
     if (!SUPPORTED_OAUTH_PROVIDERS.has(provider)) {
