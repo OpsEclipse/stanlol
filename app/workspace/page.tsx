@@ -9,7 +9,9 @@ import {
   ThreadHistoryList,
   type ThreadHistoryItem,
 } from "../../components/thread-history-list.js";
+import { formatTimestamp } from "../../lib/format-timestamp.js";
 import { getCurrentUserProfile, getUserDb } from "../../lib/db.js";
+import { listVoiceProfiles, type VoiceProfileRow } from "../../lib/voice-list.js";
 
 const ACCESS_TOKEN_COOKIE_NAME = "stanlol-access-token";
 const SIGN_OUT_PATH = "/auth/sign-out";
@@ -17,6 +19,7 @@ const SIGN_OUT_PATH = "/auth/sign-out";
 interface SidebarIdentity {
   displayName: string | null;
   email: string | null;
+  userId: string | null;
 }
 
 function normalizeText(value: unknown): string | null {
@@ -91,6 +94,7 @@ function deriveSidebarIdentityFromToken(accessToken: string): SidebarIdentity {
     return {
       displayName: null,
       email: null,
+      userId: null,
     };
   }
 
@@ -106,10 +110,16 @@ function deriveSidebarIdentityFromToken(accessToken: string): SidebarIdentity {
       normalizeText(payload.name) ??
       readDisplayNameFromMetadata(userMetadata),
     email: normalizeText(payload.email),
+    userId: normalizeText(payload.sub) ?? normalizeText(payload.user_id),
   };
 }
 
-async function loadSidebarIdentity(): Promise<SidebarIdentity> {
+interface WorkspaceContext {
+  sidebarIdentity: SidebarIdentity;
+  voiceProfiles: VoiceProfileRow[];
+}
+
+async function loadWorkspaceContext(): Promise<WorkspaceContext> {
   let accessToken = "";
 
   try {
@@ -117,34 +127,310 @@ async function loadSidebarIdentity(): Promise<SidebarIdentity> {
     accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE_NAME)?.value?.trim() ?? "";
   } catch {
     return {
-      displayName: null,
-      email: null,
+      sidebarIdentity: {
+        displayName: null,
+        email: null,
+        userId: null,
+      },
+      voiceProfiles: [],
     };
   }
 
   if (!accessToken) {
     return {
-      displayName: null,
-      email: null,
+      sidebarIdentity: {
+        displayName: null,
+        email: null,
+        userId: null,
+      },
+      voiceProfiles: [],
     };
   }
 
   const fallbackIdentity = deriveSidebarIdentityFromToken(accessToken);
 
   try {
-    const profile = await getCurrentUserProfile(getUserDb(accessToken));
-
-    if (!profile) {
-      return fallbackIdentity;
-    }
+    const userDb = getUserDb(accessToken);
+    const profile = await getCurrentUserProfile(userDb).catch(() => null);
+    const userId = normalizeText(profile?.id) ?? fallbackIdentity.userId;
+    const voiceProfiles = userId ? await listVoiceProfiles(userDb, { userId }).catch(() => []) : [];
 
     return {
-      displayName: normalizeText(profile.display_name),
-      email: normalizeText(profile.email),
+      sidebarIdentity: {
+        displayName: normalizeText(profile?.display_name) ?? fallbackIdentity.displayName,
+        email: normalizeText(profile?.email) ?? fallbackIdentity.email,
+        userId,
+      },
+      voiceProfiles,
     };
   } catch {
-    return fallbackIdentity;
+    return {
+      sidebarIdentity: fallbackIdentity,
+      voiceProfiles: [],
+    };
   }
+}
+
+function getVoiceSummary(voiceProfile: VoiceProfileRow): string {
+  return (
+    normalizeText(voiceProfile.description) ??
+    normalizeText(voiceProfile.instructions) ??
+    "Saved voice profile"
+  );
+}
+
+function getVoiceUpdatedLabel(updatedAt: string): string {
+  const relativeLabel = formatTimestamp(updatedAt, { format: "relative" });
+  const absoluteLabel = formatTimestamp(updatedAt, { format: "date" });
+
+  if (relativeLabel) {
+    return `Updated ${relativeLabel}`;
+  }
+
+  if (absoluteLabel) {
+    return `Updated ${absoluteLabel}`;
+  }
+
+  return "Updated recently";
+}
+
+function getVoiceCreatedLabel(createdAt: string): string {
+  const absoluteLabel = formatTimestamp(createdAt, { format: "date" });
+
+  if (absoluteLabel) {
+    return `Created ${absoluteLabel}`;
+  }
+
+  return "Created recently";
+}
+
+function SavedVoiceList({
+  showHeader = false,
+  voiceProfiles,
+}: {
+  showHeader?: boolean;
+  voiceProfiles: ReadonlyArray<VoiceProfileRow>;
+}) {
+  return (
+    <div className="rounded-[1.35rem] border border-white/10 bg-white/[0.03] p-4">
+      {showHeader ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400">
+              Saved voices
+            </p>
+            <p className="mt-2 text-sm leading-6 text-stone-300">
+              Review reusable writing profiles without leaving the workspace.
+            </p>
+          </div>
+          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-stone-300">
+            {voiceProfiles.length} saved
+          </span>
+        </div>
+      ) : null}
+      {voiceProfiles.length === 0 ? (
+        <p className={showHeader ? "mt-4 text-sm leading-6 text-stone-300" : "text-sm leading-6 text-stone-300"}>
+          Saved voices will appear here after the first profile is created.
+        </p>
+      ) : (
+        <ul className={showHeader ? "mt-4 space-y-3" : "space-y-3"}>
+          {voiceProfiles.map((voiceProfile) => (
+            <li
+              key={voiceProfile.id}
+              className="rounded-[1.2rem] border border-white/10 bg-black/20 p-4"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-white">{voiceProfile.name}</p>
+                  <p className="mt-2 text-sm leading-6 text-stone-300">
+                    {getVoiceSummary(voiceProfile)}
+                  </p>
+                </div>
+                <span className="rounded-full border border-emerald-300/20 bg-emerald-200/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-emerald-100">
+                  {getVoiceUpdatedLabel(voiceProfile.updated_at)}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const VOICE_IMPORT_OPTIONS = [
+  {
+    buttonLabel: "Manual import pending",
+    description:
+      "Bring in pasted writing samples or file-based examples once the manual import flow lands.",
+    eyebrow: "Manual",
+    status: "Next",
+    title: "Prior writing samples",
+  },
+  {
+    buttonLabel: "LinkedIn import pending",
+    description:
+      "Use a gated LinkedIn import path when the supported connection flow is available.",
+    eyebrow: "LinkedIn",
+    status: "Gated",
+    title: "Profile and post history",
+  },
+] as const;
+
+function SavedVoiceDetail({
+  voiceProfile,
+}: {
+  voiceProfile: Readonly<VoiceProfileRow> | null;
+}) {
+  if (!voiceProfile) {
+    return (
+      <div className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/[0.02] p-4">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400">
+          Voice detail
+        </p>
+        <p className="mt-3 text-sm font-medium text-white">Saved voice detail appears here</p>
+        <p className="mt-2 text-sm leading-6 text-stone-300">
+          Create the first voice profile to unlock edit controls and staged import options.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <section
+      aria-label="Saved voice detail"
+      className="rounded-[1.35rem] border border-white/10 bg-white/[0.03] p-4"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="max-w-xl">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400">
+            Voice detail
+          </p>
+          <h4 className="mt-2 text-lg font-semibold text-white">{voiceProfile.name}</h4>
+          <p className="mt-2 text-sm leading-6 text-stone-300">{getVoiceSummary(voiceProfile)}</p>
+        </div>
+        <span className="rounded-full border border-emerald-300/20 bg-emerald-200/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-emerald-100">
+          {getVoiceUpdatedLabel(voiceProfile.updated_at)}
+        </span>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-stone-300">
+          {getVoiceCreatedLabel(voiceProfile.created_at)}
+        </span>
+        <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-stone-300">
+          Ready to edit
+        </span>
+      </div>
+      <form aria-label="Voice detail editor" className="mt-5 space-y-4">
+        <div>
+          <label
+            className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400"
+            htmlFor={`voice-detail-name-${voiceProfile.id}`}
+          >
+            Voice name
+          </label>
+          <input
+            id={`voice-detail-name-${voiceProfile.id}`}
+            className="mt-3 h-12 w-full rounded-[1.1rem] border border-white/10 bg-black/20 px-4 text-sm text-stone-100 outline-none placeholder:text-stone-500 focus:border-white/20"
+            defaultValue={voiceProfile.name}
+            type="text"
+          />
+        </div>
+        <div>
+          <label
+            className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400"
+            htmlFor={`voice-detail-description-${voiceProfile.id}`}
+          >
+            Short description
+          </label>
+          <textarea
+            id={`voice-detail-description-${voiceProfile.id}`}
+            className="mt-3 min-h-24 w-full rounded-[1.35rem] border border-white/10 bg-black/20 px-4 py-3 text-sm leading-7 text-stone-100 outline-none placeholder:text-stone-500 focus:border-white/20"
+            defaultValue={voiceProfile.description ?? ""}
+            rows={3}
+          />
+        </div>
+        <div>
+          <label
+            className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400"
+            htmlFor={`voice-detail-instructions-${voiceProfile.id}`}
+          >
+            Writing instructions
+          </label>
+          <textarea
+            id={`voice-detail-instructions-${voiceProfile.id}`}
+            className="mt-3 min-h-40 w-full rounded-[1.35rem] border border-white/10 bg-black/20 px-4 py-3 text-sm leading-7 text-stone-100 outline-none placeholder:text-stone-500 focus:border-white/20"
+            defaultValue={voiceProfile.instructions}
+            rows={6}
+          />
+        </div>
+        <div className="flex flex-col gap-4 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-lg text-sm leading-6 text-stone-300">
+            Edit the saved profile fields here, then attach source material from the import options
+            below.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-stone-100 transition hover:border-white/20 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+              type="button"
+            >
+              Reset edits
+            </button>
+            <button
+              className="inline-flex items-center justify-center rounded-full border border-emerald-300/20 bg-emerald-200/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+              type="button"
+            >
+              Save edits
+            </button>
+          </div>
+        </div>
+      </form>
+      <div className="mt-5 border-t border-white/10 pt-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="max-w-xl">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400">
+              Import options
+            </p>
+            <p className="mt-2 text-sm leading-6 text-stone-300">
+              Expand this voice with examples once the manual and LinkedIn import entry points are
+              connected.
+            </p>
+          </div>
+          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-stone-300">
+            2 paths staged
+          </span>
+        </div>
+        <div aria-label="Voice import options" className="mt-4 grid gap-3">
+          {VOICE_IMPORT_OPTIONS.map((option) => (
+            <article
+              key={option.title}
+              className="rounded-[1.2rem] border border-white/10 bg-black/20 p-4"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="max-w-lg">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-amber-200/75">
+                    {option.eyebrow}
+                  </p>
+                  <h5 className="mt-2 text-sm font-semibold text-white">{option.title}</h5>
+                  <p className="mt-2 text-sm leading-6 text-stone-300">{option.description}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-stone-300">
+                  {option.status}
+                </span>
+              </div>
+              <button
+                className="mt-4 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-stone-400"
+                disabled
+                type="button"
+              >
+                {option.buttonLabel}
+              </button>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function createDemoThreadHistory(): ThreadHistoryItem[] {
@@ -241,7 +527,8 @@ const VOICE_CREATION_TRAITS = [
 ] as const;
 
 export default async function WorkspacePage() {
-  const sidebarIdentity = await loadSidebarIdentity();
+  const { sidebarIdentity, voiceProfiles } = await loadWorkspaceContext();
+  const featuredVoiceProfile = voiceProfiles[0] ?? null;
 
   return (
     <main className="relative min-h-[100dvh] overflow-y-auto bg-stone-950 text-stone-100 lg:h-[100dvh] lg:min-h-screen lg:overflow-hidden">
@@ -303,7 +590,7 @@ export default async function WorkspacePage() {
           className="order-1 flex min-h-0 min-w-0 flex-1 flex-col lg:order-2"
         >
           <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-            <div className="flex min-h-[28rem] flex-col rounded-[2rem] border border-white/10 bg-white/8 p-4 shadow-2xl shadow-black/40 backdrop-blur sm:p-5">
+            <div className="flex min-h-[28rem] flex-col rounded-[2rem] border border-white/10 bg-white/8 p-4 shadow-2xl shadow-black/40 backdrop-blur sm:p-5 lg:h-full">
               <div className="rounded-[1.65rem] border border-white/10 bg-black/20 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="max-w-3xl">
@@ -329,7 +616,34 @@ export default async function WorkspacePage() {
                   </div>
                 </div>
               </div>
-              <div className="mt-4 grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+              <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4">
+                <section
+                  aria-label="Narrow-screen workflow notes"
+                  className="rounded-[1.75rem] border border-white/10 bg-black/20 p-4 shadow-lg shadow-black/20 lg:hidden"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-amber-200/75">
+                        Narrow screens
+                      </p>
+                      <h3 className="mt-2 text-xl font-semibold text-white">Focused essentials</h3>
+                    </div>
+                    <span className="rounded-full border border-amber-300/20 bg-amber-200/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-amber-100">
+                      Core workflow first
+                    </span>
+                  </div>
+                  <ul className="mt-4 space-y-3">
+                    {NARROW_SCREEN_WORKSPACE_NOTES.map((note) => (
+                      <li
+                        key={note}
+                        className="rounded-[1.2rem] border border-white/10 bg-white/[0.04] p-3 text-sm leading-6 text-stone-200"
+                      >
+                        {note}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+                <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
                 <section
                   aria-label="Conversation surface"
                   className="flex min-h-[18rem] flex-col rounded-[1.75rem] border border-white/10 bg-black/20 p-4 shadow-lg shadow-black/20"
@@ -395,36 +709,10 @@ export default async function WorkspacePage() {
                     ))}
                   </ul>
                 </aside>
-              </div>
-              <section
-                aria-label="Narrow-screen workflow notes"
-                className="mt-4 rounded-[1.75rem] border border-white/10 bg-black/20 p-4 shadow-lg shadow-black/20 lg:hidden"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-amber-200/75">
-                      Narrow screens
-                    </p>
-                    <h3 className="mt-2 text-xl font-semibold text-white">Focused essentials</h3>
-                  </div>
-                  <span className="rounded-full border border-amber-300/20 bg-amber-200/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-amber-100">
-                    Core workflow first
-                  </span>
                 </div>
-                <ul className="mt-4 space-y-3">
-                  {NARROW_SCREEN_WORKSPACE_NOTES.map((note) => (
-                    <li
-                      key={note}
-                      className="rounded-[1.2rem] border border-white/10 bg-white/[0.04] p-3 text-sm leading-6 text-stone-200"
-                    >
-                      {note}
-                    </li>
-                  ))}
-                </ul>
-              </section>
               <section
                 aria-label="Prompt composer"
-                className="mt-4 rounded-[1.75rem] border border-white/10 bg-black/20 p-4 shadow-lg shadow-black/20"
+                className="mt-auto rounded-[1.75rem] border border-sky-300/20 bg-sky-400/[0.08] p-4 shadow-lg shadow-black/20"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -433,12 +721,12 @@ export default async function WorkspacePage() {
                     </p>
                     <h3 className="mt-2 text-xl font-semibold text-white">Message composer</h3>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-300">
-                      Draft the next turn directly beneath the conversation so intent and wording
-                      stay connected.
+                      The primary action stays pinned to the bottom of the center panel so the next
+                      reply is always in reach.
                     </p>
                   </div>
-                  <span className="rounded-full border border-sky-300/20 bg-sky-200/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-100">
-                    Ready to shape
+                  <span className="rounded-full border border-sky-200/30 bg-sky-200/15 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-50">
+                    Primary action
                   </span>
                 </div>
                 <div className="mt-4">
@@ -467,8 +755,8 @@ export default async function WorkspacePage() {
                 </div>
                 <div className="mt-5 flex flex-col gap-4 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm leading-6 text-stone-300">
-                    Conversation context stays visible here while the dedicated draft panel remains
-                    out of view.
+                    Conversation context stays visible above while the draft panel stays out of
+                    view.
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
@@ -486,6 +774,7 @@ export default async function WorkspacePage() {
                   </div>
                 </div>
               </section>
+              </div>
             </div>
             <div className="flex min-h-0 flex-col gap-4">
               <aside
@@ -674,6 +963,12 @@ export default async function WorkspacePage() {
                         value="Available on wider screens"
                       />
                     </div>
+                    <div className="mt-5 border-t border-white/10 pt-4">
+                      <SavedVoiceList showHeader voiceProfiles={voiceProfiles} />
+                      <div className="mt-4">
+                        <SavedVoiceDetail voiceProfile={featuredVoiceProfile} />
+                      </div>
+                    </div>
                     <form action={SIGN_OUT_PATH} className="mt-5 border-t border-white/10 pt-4" method="post">
                       <button
                         className="inline-flex items-center justify-center rounded-full border border-rose-300/25 bg-rose-200/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:border-rose-200/40 hover:bg-rose-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
@@ -722,6 +1017,20 @@ export default async function WorkspacePage() {
                       label="Saved context"
                       value="History and workspace tools stay close"
                     />
+                  </AccountSettingsSection>
+                  <AccountSettingsSection
+                    description="Saved voice profiles stay visible in settings so reusable tones and structures remain easy to review."
+                    eyebrow="Voices"
+                    title="Saved voices"
+                  >
+                    <SavedVoiceList voiceProfiles={voiceProfiles} />
+                    <SavedVoiceDetail voiceProfile={featuredVoiceProfile} />
+                  </AccountSettingsSection>
+                  <AccountSettingsSection
+                    description="Session controls stay separate so account exit remains obvious even as more settings land in this panel."
+                    eyebrow="Workspace"
+                    title="Session"
+                  >
                     <form action={SIGN_OUT_PATH} className="pt-1" method="post">
                       <button
                         className="inline-flex items-center justify-center rounded-full border border-rose-300/25 bg-rose-200/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:border-rose-200/40 hover:bg-rose-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"

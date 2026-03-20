@@ -382,7 +382,7 @@
       "id": "F055",
       "name": "Create bottom-anchored composer",
       "description": "Place the chat input at the bottom of the center panel as the primary action area.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F043"]
     },
     {
@@ -1040,14 +1040,14 @@
       "id": "F149",
       "name": "Persist new voice record",
       "description": "Save a newly created voice profile for the current user.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F141", "F145"]
     },
     {
       "id": "F150",
       "name": "Persist voice updates",
       "description": "Save edits to an existing voice profile.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F141", "F145"]
     },
     {
@@ -1068,7 +1068,7 @@
       "id": "F153",
       "name": "Create voice list view",
       "description": "Display all saved voices inside the lightweight settings workflow.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F144", "F031"]
     },
     {
@@ -1082,7 +1082,7 @@
       "id": "F155",
       "name": "Create voice detail and edit view",
       "description": "Show a single voice with edit controls and import options.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F144", "F153"]
     },
     {

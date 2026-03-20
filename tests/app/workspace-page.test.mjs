@@ -58,7 +58,12 @@ function compilePageFixture(projectRoot) {
   writeFileSync(
     resolve(outputDirectory, "app/workspace/workspace-page-db.mock.js"),
     `export function getUserDb(accessToken) {
-  return { accessToken };
+  return {
+    accessToken,
+    async select() {
+      return globalThis.__stanlolWorkspaceVoices ?? [];
+    },
+  };
 }
 
 export async function getCurrentUserProfile() {
@@ -228,6 +233,7 @@ test("workspace page shows thread activity times in the sidebar history list", a
     rmSync(outputDirectory, { force: true, recursive: true });
     delete globalThis.__stanlolWorkspaceCookies;
     delete globalThis.__stanlolWorkspaceProfile;
+    delete globalThis.__stanlolWorkspaceVoices;
   });
 
   const pageModulePath = resolve(outputDirectory, "app/workspace/page.js");
@@ -244,6 +250,26 @@ test("workspace page shows thread activity times in the sidebar history list", a
     id: "user-123",
     updated_at: "2026-03-19T20:15:00.000Z",
   };
+  globalThis.__stanlolWorkspaceVoices = [
+    {
+      created_at: "2026-03-19T21:00:00.000Z",
+      description: "Proof-first notes for customer-facing updates.",
+      id: "voice-123",
+      instructions: "Lead with evidence, keep the tone calm, and close with one CTA.",
+      name: "Customer-ready operator",
+      updated_at: "2026-03-19T21:10:00.000Z",
+      user_id: "user-123",
+    },
+    {
+      created_at: "2026-03-19T19:30:00.000Z",
+      description: null,
+      id: "voice-456",
+      instructions: "Use direct product language and short paragraphs for launch recaps.",
+      name: "Launch recap",
+      updated_at: "2026-03-19T19:45:00.000Z",
+      user_id: "user-123",
+    },
+  ];
 
   const pageModule = await import(pathToFileURL(pageModulePath).href);
   const view = resolveElementTree(await pageModule.default());
@@ -262,6 +288,8 @@ test("workspace page shows thread activity times in the sidebar history list", a
   const compactWorkspaceControls = findElementByAriaLabel(view, "Compact workspace controls");
   const draftPanel = findElementByAriaLabel(view, "Draft panel");
   const voiceCreationForm = findElementByAriaLabel(view, "Voice creation form");
+  const savedVoiceDetail = findElementByAriaLabel(view, "Saved voice detail");
+  const voiceImportOptions = findElementByAriaLabel(view, "Voice import options");
   const textareas = findElementsByType(view, "textarea");
   const inputs = findElementsByType(view, "input");
   const timeElements = findElementsByType(view, "time");
@@ -277,6 +305,8 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.ok(compactWorkspaceControls);
   assert.ok(draftPanel);
   assert.ok(voiceCreationForm);
+  assert.ok(savedVoiceDetail);
+  assert.ok(voiceImportOptions);
   assert.equal(draftPanel.props.hidden, true);
   assert.equal(draftPanel.props["data-draft-panel-state"], "hidden");
   assert.match(main.props.className, /min-h-\[100dvh\]/);
@@ -291,6 +321,7 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.match(String(compositionGuidance.props.className), /lg:block/);
   assert.match(String(narrowScreenWorkflowNotes.props.className), /lg:hidden/);
   assert.match(String(compactWorkspaceControls.props.className), /lg:hidden/);
+  assert.match(String(promptComposer.props.className), /mt-auto/);
   assert.match(text, /Account/);
   assert.match(text, /Stan Writer/);
   assert.match(text, /writer@example\.com/);
@@ -300,7 +331,7 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.match(text, /Active working thread/);
   assert.match(text, /Build the next reply/);
   assert.match(text, /Message composer/);
-  assert.match(text, /Ready to shape/);
+  assert.match(text, /Primary action/);
   assert.match(text, /Create a reusable voice/);
   assert.match(text, /Reusable profile/);
   assert.match(text, /Voice name/);
@@ -322,6 +353,7 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.match(text, /The center panel now carries the active discussion and composition controls/);
   assert.match(text, /Keep the exploratory back-and-forth visible while the reply is being shaped\./);
   assert.match(text, /The center panel keeps the writing brief close to the thread/);
+  assert.match(text, /The primary action stays pinned to the bottom of the center panel/);
   assert.match(text, /Save thought/);
   assert.match(text, /Shape response/);
   assert.match(text, /Focused essentials/);
@@ -335,16 +367,66 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.match(text, /Account settings/);
   assert.match(text, /Profile and access/);
   assert.match(text, /Environment and controls/);
+  assert.match(text, /Saved voices/);
+  assert.match(text, /Review reusable writing profiles without leaving the workspace\./);
+  assert.match(text, /Voice detail/);
+  assert.match(text, /Ready to edit/);
+  assert.match(text, /Edit the saved profile fields here/i);
+  assert.match(text, /Save edits/);
+  assert.match(text, /Reset edits/);
+  assert.match(text, /Import options/);
+  assert.match(text, /2 paths staged/);
+  assert.match(text, /Prior writing samples/);
+  assert.match(text, /Manual import pending/);
+  assert.match(text, /Profile and post history/);
+  assert.match(text, /LinkedIn import pending/);
+  assert.match(text, /Customer-ready operator/);
+  assert.match(text, /Proof-first notes for customer-facing updates\./);
+  assert.match(text, /Launch recap/);
+  assert.match(text, /Use direct product language and short paragraphs for launch recaps\./);
+  assert.match(text, /2\s+saved/);
   assert.match(text, /Authenticated workspace access/);
   assert.match(text, /Sign out/);
   assert.match(text, /End this workspace session and return to the sign-in screen\./);
   assert.match(text, /Profile settings stay expanded on wider screens/i);
-  assert.equal(inputs.length, 1);
-  assert.equal(textareas.length, 3);
-  assert.match(String(inputs[0].props.defaultValue), /customer-ready operator/i);
-  assert.match(String(textareas[0].props.defaultValue), /customer-facing launch update/i);
-  assert.match(String(textareas[1].props.defaultValue), /launch updates and product notes/i);
-  assert.match(String(textareas[2].props.defaultValue), /Write with a confident operator tone/i);
+  assert.equal(inputs.length >= 3, true);
+  assert.equal(textareas.length >= 7, true);
+  assert.equal(
+    inputs.some((input) => /customer-ready operator/i.test(String(input.props.defaultValue))),
+    true,
+  );
+  assert.equal(
+    textareas.some((textarea) =>
+      /customer-facing launch update/i.test(String(textarea.props.defaultValue)),
+    ),
+    true,
+  );
+  assert.equal(
+    textareas.some((textarea) =>
+      /launch updates and product notes/i.test(String(textarea.props.defaultValue)),
+    ),
+    true,
+  );
+  assert.equal(
+    textareas.some((textarea) =>
+      /Write with a confident operator tone/i.test(String(textarea.props.defaultValue)),
+    ),
+    true,
+  );
+  assert.equal(
+    textareas.some((textarea) =>
+      /Proof-first notes for customer-facing updates\./i.test(String(textarea.props.defaultValue)),
+    ),
+    true,
+  );
+  assert.equal(
+    textareas.some((textarea) =>
+      /Lead with evidence, keep the tone calm, and close with one CTA\./i.test(
+        String(textarea.props.defaultValue),
+      ),
+    ),
+    true,
+  );
   assert.equal(
     forms.some((form) => form.props.action === "/auth/sign-out" && form.props.method === "post"),
     true,
@@ -356,10 +438,21 @@ test("workspace page shows thread activity times in the sidebar history list", a
     forms.some((form) => form.props["aria-label"] === "Voice profile fields"),
     true,
   );
+  assert.equal(forms.some((form) => form.props["aria-label"] === "Voice detail editor"), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Save thought")), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Shape response")), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Save voice")), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Clear form")), true);
+  assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Save edits")), true);
+  assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Reset edits")), true);
+  assert.equal(
+    buttons.some((button) => collectText(button).join(" ").includes("Manual import pending")),
+    true,
+  );
+  assert.equal(
+    buttons.some((button) => collectText(button).join(" ").includes("LinkedIn import pending")),
+    true,
+  );
   assert.equal(timeElements.length, 3);
   for (const timeElement of timeElements) {
     assert.equal(typeof timeElement.props.dateTime, "string");
