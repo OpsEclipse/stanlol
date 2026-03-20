@@ -1,19 +1,1649 @@
 {
   "features": [
     {
-      "name": "Split architecture rules from agent workflow",
-      "status": "done",
-      "notes": "Moved durable system constraints to docs/ARCHITECTURE.md and workflow/process guidance to AGENTS.md."
+      "id": "F001",
+      "name": "Create environment configuration module",
+      "description": "Add a single source of truth for required runtime environment variables and feature flags.",
+      "status": "pending",
+      "dependencies": []
     },
     {
-      "name": "Establish docs reference set",
-      "status": "done",
-      "notes": "Added docs/ARCHITECTURE.md, DB_SCHEMA.md, AGENTS_GUIDE.md, UI_GUIDE.md, API_CONTRACT.md, and TECH_DEBT.md."
+      "id": "F002",
+      "name": "Create shared TypeScript domain types",
+      "description": "Define shared application types for users, threads, messages, drafts, voices, imports, and assets.",
+      "status": "pending",
+      "dependencies": []
     },
     {
-      "name": "Add components directory",
+      "id": "F003",
+      "name": "Create Supabase database wrapper",
+      "description": "Centralize Supabase access inside `lib/db.ts` for all persistence operations.",
       "status": "done",
-      "notes": "Created a tracked components/ directory and updated docs to reflect that it now exists."
+      "dependencies": ["F001", "F002"]
+    },
+    {
+      "id": "F004",
+      "name": "Create OpenAI wrapper",
+      "description": "Centralize model access inside `lib/ai.ts` instead of calling the API directly from routes or components.",
+      "status": "pending",
+      "dependencies": ["F001", "F002"]
+    },
+    {
+      "id": "F005",
+      "name": "Create agent orchestration module",
+      "description": "Add `lib/agents/` orchestration for draft generation and revision decisions.",
+      "status": "pending",
+      "dependencies": ["F002", "F004"]
+    },
+    {
+      "id": "F006",
+      "name": "Create JSON response helper",
+      "description": "Standardize API responses to the required `{ success, data, error }` envelope.",
+      "status": "pending",
+      "dependencies": ["F002"]
+    },
+    {
+      "id": "F007",
+      "name": "Create request validation helper",
+      "description": "Add reusable input validation utilities for route payloads and query parameters.",
+      "status": "pending",
+      "dependencies": ["F002"]
+    },
+    {
+      "id": "F008",
+      "name": "Create authenticated API helper",
+      "description": "Add a shared auth guard for API routes that require a signed-in user.",
+      "status": "pending",
+      "dependencies": ["F003", "F006"]
+    },
+    {
+      "id": "F009",
+      "name": "Create app error boundary",
+      "description": "Add a top-level error boundary for graceful handling of unexpected UI failures.",
+      "status": "pending",
+      "dependencies": ["F002"]
+    },
+    {
+      "id": "F010",
+      "name": "Create loading state primitives",
+      "description": "Define consistent loading components for auth, chat, drafts, uploads, and settings.",
+      "status": "pending",
+      "dependencies": ["F002"]
+    },
+    {
+      "id": "F011",
+      "name": "Create empty state primitives",
+      "description": "Define reusable empty states for threads, voices, drafts, and imports.",
+      "status": "pending",
+      "dependencies": ["F002"]
+    },
+    {
+      "id": "F012",
+      "name": "Create toast and feedback system",
+      "description": "Add lightweight user feedback for copy, save, upload, and import outcomes.",
+      "status": "pending",
+      "dependencies": ["F002"]
+    },
+    {
+      "id": "F013",
+      "name": "Create clipboard utility",
+      "description": "Add a shared clipboard helper for copying the current draft text.",
+      "status": "pending",
+      "dependencies": []
+    },
+    {
+      "id": "F014",
+      "name": "Create external link utility",
+      "description": "Add a safe helper for external navigation such as opening LinkedIn.",
+      "status": "pending",
+      "dependencies": []
+    },
+    {
+      "id": "F015",
+      "name": "Create timestamp formatting utility",
+      "description": "Add a shared formatter for thread, message, draft, and import timestamps.",
+      "status": "pending",
+      "dependencies": []
+    },
+    {
+      "id": "F016",
+      "name": "Create storage asset URL utility",
+      "description": "Add a helper for generating preview URLs for stored uploaded assets.",
+      "status": "pending",
+      "dependencies": ["F001"]
+    },
+    {
+      "id": "F017",
+      "name": "Create local-only feature flag helper",
+      "description": "Add a single helper for development-only capabilities such as auto-login.",
+      "status": "pending",
+      "dependencies": ["F001"]
+    },
+    {
+      "id": "F018",
+      "name": "Create generation audit event table",
+      "description": "Persist generation audit records for debugging and product insight.",
+      "status": "pending",
+      "dependencies": ["F003"]
+    },
+    {
+      "id": "F019",
+      "name": "Create generation audit logging service",
+      "description": "Add a shared service for writing generation success and failure audit events.",
+      "status": "pending",
+      "dependencies": ["F003", "F018"]
+    },
+    {
+      "id": "F020",
+      "name": "Create analytics event taxonomy",
+      "description": "Define a stable set of product analytics events for key workflow milestones.",
+      "status": "pending",
+      "dependencies": ["F002"]
+    },
+    {
+      "id": "F021",
+      "name": "Create user profiles migration",
+      "description": "Add the persistent user profile table required for account-level metadata.",
+      "status": "pending",
+      "dependencies": ["F003"]
+    },
+    {
+      "id": "F022",
+      "name": "Create user profile fetch helper",
+      "description": "Add a shared database helper for loading the current user's profile.",
+      "status": "pending",
+      "dependencies": ["F003", "F021"]
+    },
+    {
+      "id": "F023",
+      "name": "Sync profile on first sign-in",
+      "description": "Create or update a user profile record the first time a user authenticates.",
+      "status": "pending",
+      "dependencies": ["F022"]
+    },
+    {
+      "id": "F024",
+      "name": "Add Google OAuth sign-in screen",
+      "description": "Provide a Google sign-in path for authenticated workspace access.",
+      "status": "pending",
+      "dependencies": ["F021"]
+    },
+    {
+      "id": "F025",
+      "name": "Add magic link sign-in screen",
+      "description": "Provide an email magic link sign-in path for authenticated workspace access.",
+      "status": "pending",
+      "dependencies": ["F021"]
+    },
+    {
+      "id": "F026",
+      "name": "Add auth callback handler",
+      "description": "Handle OAuth and magic link completion and transition users into the workspace.",
+      "status": "pending",
+      "dependencies": ["F021", "F022"]
+    },
+    {
+      "id": "F027",
+      "name": "Add signed-out route protection",
+      "description": "Prevent anonymous users from accessing the authenticated workspace.",
+      "status": "pending",
+      "dependencies": ["F022", "F026"]
+    },
+    {
+      "id": "F028",
+      "name": "Add authenticated workspace redirect",
+      "description": "Send authenticated users directly to the main workspace experience.",
+      "status": "pending",
+      "dependencies": ["F027"]
+    },
+    {
+      "id": "F029",
+      "name": "Add sign-out control",
+      "description": "Let authenticated users end their session from the product UI.",
+      "status": "pending",
+      "dependencies": ["F026"]
+    },
+    {
+      "id": "F030",
+      "name": "Add sidebar profile summary",
+      "description": "Show the current user's account identity in the quiet left sidebar.",
+      "status": "pending",
+      "dependencies": ["F022", "F026"]
+    },
+    {
+      "id": "F031",
+      "name": "Add basic account settings panel",
+      "description": "Provide a lightweight settings surface for account and workspace controls.",
+      "status": "pending",
+      "dependencies": ["F030"]
+    },
+    {
+      "id": "F032",
+      "name": "Add account email display",
+      "description": "Show the signed-in email address in account settings for clarity.",
+      "status": "pending",
+      "dependencies": ["F022", "F031"]
+    },
+    {
+      "id": "F033",
+      "name": "Add editable display name setting",
+      "description": "Let users manage the display name associated with their profile.",
+      "status": "pending",
+      "dependencies": ["F022", "F031"]
+    },
+    {
+      "id": "F034",
+      "name": "Add auth bootstrap loading state",
+      "description": "Show a clean loading experience while the session state is being resolved.",
+      "status": "pending",
+      "dependencies": ["F010", "F026"]
+    },
+    {
+      "id": "F035",
+      "name": "Add auth error messaging",
+      "description": "Surface authentication failures without exposing raw provider errors.",
+      "status": "pending",
+      "dependencies": ["F011", "F026"]
+    },
+    {
+      "id": "F036",
+      "name": "Add session refresh handling",
+      "description": "Keep the authenticated workspace usable across normal session refresh behavior.",
+      "status": "pending",
+      "dependencies": ["F026"]
+    },
+    {
+      "id": "F037",
+      "name": "Add unauthorized API response behavior",
+      "description": "Return consistent unauthenticated and unauthorized JSON errors from protected routes.",
+      "status": "pending",
+      "dependencies": ["F006", "F008"]
+    },
+    {
+      "id": "F038",
+      "name": "Add local test-account seeding lookup",
+      "description": "Provide a development-only path to identify the seeded local test user.",
+      "status": "pending",
+      "dependencies": ["F017", "F021"]
+    },
+    {
+      "id": "F039",
+      "name": "Add dev auto-login environment gate",
+      "description": "Require an explicit local environment flag before auto-login can execute.",
+      "status": "pending",
+      "dependencies": ["F017", "F038"]
+    },
+    {
+      "id": "F040",
+      "name": "Add preview and production auto-login deny behavior",
+      "description": "Hard-block the dev auto-login path outside local development environments.",
+      "status": "pending",
+      "dependencies": ["F017", "F039"]
+    },
+    {
+      "id": "F041",
+      "name": "Create full-height workspace frame",
+      "description": "Build the primary authenticated layout with a full-height focused workspace.",
+      "status": "pending",
+      "dependencies": ["F028"]
+    },
+    {
+      "id": "F042",
+      "name": "Create minimal left sidebar layout",
+      "description": "Build the visually quiet sidebar for history, profile, and settings entry points.",
+      "status": "pending",
+      "dependencies": ["F041"]
+    },
+    {
+      "id": "F043",
+      "name": "Create center chat panel layout",
+      "description": "Build the main working surface for conversation and composition.",
+      "status": "pending",
+      "dependencies": ["F041"]
+    },
+    {
+      "id": "F044",
+      "name": "Create hidden draft panel region",
+      "description": "Define the right-side draft panel container that starts hidden before a draft exists.",
+      "status": "pending",
+      "dependencies": ["F041"]
+    },
+    {
+      "id": "F045",
+      "name": "Add animated draft panel reveal",
+      "description": "Animate the transition from two-panel to three-panel workspace once a draft appears.",
+      "status": "pending",
+      "dependencies": ["F044"]
+    },
+    {
+      "id": "F046",
+      "name": "Add responsive narrow-screen workspace behavior",
+      "description": "Preserve the product's core workflow on smaller screens without cluttering the layout.",
+      "status": "pending",
+      "dependencies": ["F041"]
+    },
+    {
+      "id": "F047",
+      "name": "Add new chat action placement",
+      "description": "Place a clear new chat action inside the left sidebar.",
+      "status": "pending",
+      "dependencies": ["F042"]
+    },
+    {
+      "id": "F048",
+      "name": "Create thread history list surface",
+      "description": "Add the sidebar surface that will display prior chat threads.",
+      "status": "pending",
+      "dependencies": ["F042"]
+    },
+    {
+      "id": "F049",
+      "name": "Add active thread highlighting",
+      "description": "Visually distinguish the currently open thread inside the conversation history list.",
+      "status": "pending",
+      "dependencies": ["F048"]
+    },
+    {
+      "id": "F050",
+      "name": "Add sidebar scroll behavior",
+      "description": "Keep the sidebar usable as thread history grows longer over time.",
+      "status": "pending",
+      "dependencies": ["F042"]
+    },
+    {
+      "id": "F051",
+      "name": "Add bottom-aligned settings entry",
+      "description": "Anchor the settings entry near the bottom of the left sidebar.",
+      "status": "pending",
+      "dependencies": ["F031", "F042"]
+    },
+    {
+      "id": "F052",
+      "name": "Create minimal conversation header",
+      "description": "Add lightweight top-of-chat context without introducing heavy navigation chrome.",
+      "status": "pending",
+      "dependencies": ["F043"]
+    },
+    {
+      "id": "F053",
+      "name": "Create chat message list container",
+      "description": "Add the scrolling conversation region for thread messages.",
+      "status": "pending",
+      "dependencies": ["F043"]
+    },
+    {
+      "id": "F054",
+      "name": "Create newest-message auto-scroll region",
+      "description": "Keep the latest part of the conversation visible as messages are added.",
+      "status": "pending",
+      "dependencies": ["F053"]
+    },
+    {
+      "id": "F055",
+      "name": "Create bottom-anchored composer",
+      "description": "Place the chat input at the bottom of the center panel as the primary action area.",
+      "status": "pending",
+      "dependencies": ["F043"]
+    },
+    {
+      "id": "F056",
+      "name": "Create composer voice selector slot",
+      "description": "Reserve a clear place in the composer for voice selection.",
+      "status": "pending",
+      "dependencies": ["F055"]
+    },
+    {
+      "id": "F057",
+      "name": "Create composer image upload slot",
+      "description": "Reserve a clear place in the composer for attaching an image.",
+      "status": "pending",
+      "dependencies": ["F055"]
+    },
+    {
+      "id": "F058",
+      "name": "Create draft metadata header region",
+      "description": "Add the right-panel header area for metadata such as voice and last updated time.",
+      "status": "pending",
+      "dependencies": ["F044"]
+    },
+    {
+      "id": "F059",
+      "name": "Create draft image preview slot",
+      "description": "Add a dedicated area in the draft panel for the attached image preview.",
+      "status": "pending",
+      "dependencies": ["F044"]
+    },
+    {
+      "id": "F060",
+      "name": "Create draft action row",
+      "description": "Add a right-panel action row for copy and LinkedIn handoff actions.",
+      "status": "pending",
+      "dependencies": ["F044"]
+    },
+    {
+      "id": "F061",
+      "name": "Create chat threads migration",
+      "description": "Add the persistent table for user-owned chat threads.",
+      "status": "pending",
+      "dependencies": ["F003", "F021"]
+    },
+    {
+      "id": "F062",
+      "name": "Create chat messages migration",
+      "description": "Add the persistent table for ordered messages within each thread.",
+      "status": "pending",
+      "dependencies": ["F003", "F061"]
+    },
+    {
+      "id": "F063",
+      "name": "Add thread ownership enforcement",
+      "description": "Prevent users from reading or mutating threads they do not own.",
+      "status": "pending",
+      "dependencies": ["F061", "F022"]
+    },
+    {
+      "id": "F064",
+      "name": "Create thread creation service",
+      "description": "Add a shared service for creating a new empty chat thread.",
+      "status": "pending",
+      "dependencies": ["F003", "F061"]
+    },
+    {
+      "id": "F065",
+      "name": "Add new-thread UI action",
+      "description": "Let users create a new thread directly from the sidebar.",
+      "status": "pending",
+      "dependencies": ["F047", "F064"]
+    },
+    {
+      "id": "F066",
+      "name": "Persist placeholder thread title",
+      "description": "Store an initial title for each thread before a better summary is available.",
+      "status": "pending",
+      "dependencies": ["F061", "F064"]
+    },
+    {
+      "id": "F067",
+      "name": "Create thread list query",
+      "description": "Add a user-scoped query for retrieving recent thread history.",
+      "status": "pending",
+      "dependencies": ["F003", "F061"]
+    },
+    {
+      "id": "F068",
+      "name": "Bind sidebar history list to thread data",
+      "description": "Render persisted thread history inside the sidebar surface.",
+      "status": "pending",
+      "dependencies": ["F048", "F067"]
+    },
+    {
+      "id": "F069",
+      "name": "Add thread reopen action",
+      "description": "Let users reopen an existing thread from conversation history.",
+      "status": "pending",
+      "dependencies": ["F068"]
+    },
+    {
+      "id": "F070",
+      "name": "Restore message history on reopen",
+      "description": "Load the full conversation stream when a saved thread is reopened.",
+      "status": "pending",
+      "dependencies": ["F062", "F069"]
+    },
+    {
+      "id": "F071",
+      "name": "Restore draft context on reopen",
+      "description": "Reconnect the reopened thread to its current draft context in the workspace.",
+      "status": "pending",
+      "dependencies": ["F069"]
+    },
+    {
+      "id": "F072",
+      "name": "Submit user message from composer",
+      "description": "Send a new user message from the chat composer into the active thread.",
+      "status": "pending",
+      "dependencies": ["F055"]
+    },
+    {
+      "id": "F073",
+      "name": "Block empty message submission",
+      "description": "Prevent blank chat sends from creating empty conversation turns.",
+      "status": "pending",
+      "dependencies": ["F072"]
+    },
+    {
+      "id": "F074",
+      "name": "Add multiline composer input",
+      "description": "Support natural long-form drafting prompts inside the chat input.",
+      "status": "pending",
+      "dependencies": ["F055"]
+    },
+    {
+      "id": "F075",
+      "name": "Add pending state during message send",
+      "description": "Show the composer and thread in a sending state while a message is being processed.",
+      "status": "pending",
+      "dependencies": ["F010", "F072"]
+    },
+    {
+      "id": "F076",
+      "name": "Persist user message row",
+      "description": "Save each submitted user message to the thread message history.",
+      "status": "pending",
+      "dependencies": ["F062", "F072"]
+    },
+    {
+      "id": "F077",
+      "name": "Persist assistant message row",
+      "description": "Save each assistant response to the thread message history.",
+      "status": "pending",
+      "dependencies": ["F062"]
+    },
+    {
+      "id": "F078",
+      "name": "Render user message bubble",
+      "description": "Display user-authored messages inside the conversation stream.",
+      "status": "pending",
+      "dependencies": ["F053", "F076"]
+    },
+    {
+      "id": "F079",
+      "name": "Render assistant message bubble",
+      "description": "Display assistant-authored messages inside the conversation stream.",
+      "status": "pending",
+      "dependencies": ["F053", "F077"]
+    },
+    {
+      "id": "F080",
+      "name": "Auto-scroll after new messages",
+      "description": "Keep the newest user and assistant turns visible as the thread grows.",
+      "status": "pending",
+      "dependencies": ["F054", "F078", "F079"]
+    },
+    {
+      "id": "F081",
+      "name": "Add failed send retry control",
+      "description": "Let users retry a message send after a transient failure.",
+      "status": "pending",
+      "dependencies": ["F075"]
+    },
+    {
+      "id": "F082",
+      "name": "Rename thread from first prompt",
+      "description": "Replace the placeholder thread title with a more meaningful summary after initial use.",
+      "status": "pending",
+      "dependencies": ["F066", "F076"]
+    },
+    {
+      "id": "F083",
+      "name": "Order threads by recent activity",
+      "description": "Sort thread history by most recently active conversation.",
+      "status": "pending",
+      "dependencies": ["F067", "F076", "F077"]
+    },
+    {
+      "id": "F084",
+      "name": "Show thread last-message preview",
+      "description": "Display a short content preview for each saved thread in the sidebar.",
+      "status": "pending",
+      "dependencies": ["F067", "F068"]
+    },
+    {
+      "id": "F085",
+      "name": "Show thread timestamp in history",
+      "description": "Display recent thread activity times in the sidebar history list.",
+      "status": "pending",
+      "dependencies": ["F015", "F067"]
+    },
+    {
+      "id": "F086",
+      "name": "Add empty chat onboarding state",
+      "description": "Guide the user when no active thread content exists yet.",
+      "status": "pending",
+      "dependencies": ["F011", "F043"]
+    },
+    {
+      "id": "F087",
+      "name": "Continue prior thread after reopen",
+      "description": "Allow new messages to continue the same saved thread seamlessly after reopen.",
+      "status": "pending",
+      "dependencies": ["F069", "F070"]
+    },
+    {
+      "id": "F088",
+      "name": "Prevent cross-thread state leakage",
+      "description": "Keep messages, drafts, voice, and uploads scoped to the active thread only.",
+      "status": "pending",
+      "dependencies": ["F069", "F087"]
+    },
+    {
+      "id": "F089",
+      "name": "Add Enter-to-send shortcut",
+      "description": "Support quick chat submission from the composer keyboard flow.",
+      "status": "pending",
+      "dependencies": ["F072"]
+    },
+    {
+      "id": "F090",
+      "name": "Add Shift+Enter newline behavior",
+      "description": "Preserve multiline message authoring without sending the composer unexpectedly.",
+      "status": "pending",
+      "dependencies": ["F074", "F089"]
+    },
+    {
+      "id": "F091",
+      "name": "Create drafts migration",
+      "description": "Add the persistent table for the single active draft associated with a thread.",
+      "status": "pending",
+      "dependencies": ["F003", "F061"]
+    },
+    {
+      "id": "F092",
+      "name": "Create draft revisions migration",
+      "description": "Add the persistent table for saved draft revision history.",
+      "status": "pending",
+      "dependencies": ["F003", "F091"]
+    },
+    {
+      "id": "F093",
+      "name": "Enforce one active draft per thread",
+      "description": "Make the one-thread-to-one-active-draft product rule explicit in persistence logic.",
+      "status": "pending",
+      "dependencies": ["F091"]
+    },
+    {
+      "id": "F094",
+      "name": "Create draft fetch helper",
+      "description": "Add a shared database helper for loading the current draft for a thread.",
+      "status": "pending",
+      "dependencies": ["F003", "F091"]
+    },
+    {
+      "id": "F095",
+      "name": "Create draft persistence helper",
+      "description": "Add a shared service for creating and updating draft records.",
+      "status": "pending",
+      "dependencies": ["F003", "F091", "F092"]
+    },
+    {
+      "id": "F096",
+      "name": "Add readiness evaluation before first draft",
+      "description": "Decide when the conversation has enough signal to generate the first post draft.",
+      "status": "pending",
+      "dependencies": ["F005", "F061", "F062"]
+    },
+    {
+      "id": "F097",
+      "name": "Add first-draft trigger from message flow",
+      "description": "Connect chat message processing to initial draft generation once readiness is reached.",
+      "status": "pending",
+      "dependencies": ["F072", "F096"]
+    },
+    {
+      "id": "F098",
+      "name": "Create initial active draft record",
+      "description": "Persist the first generated LinkedIn draft for the thread.",
+      "status": "pending",
+      "dependencies": ["F095", "F097"]
+    },
+    {
+      "id": "F099",
+      "name": "Save initial draft revision snapshot",
+      "description": "Create the first revision record when the initial draft is generated.",
+      "status": "pending",
+      "dependencies": ["F095", "F098"]
+    },
+    {
+      "id": "F100",
+      "name": "Reveal right panel on first draft",
+      "description": "Show the draft panel once the first draft has been created.",
+      "status": "pending",
+      "dependencies": ["F045", "F098"]
+    },
+    {
+      "id": "F101",
+      "name": "Keep draft panel hidden before draft exists",
+      "description": "Preserve the two-panel layout until an active draft is available.",
+      "status": "pending",
+      "dependencies": ["F044", "F091"]
+    },
+    {
+      "id": "F102",
+      "name": "Load latest draft into panel",
+      "description": "Bind the current thread's active draft to the right-panel display.",
+      "status": "pending",
+      "dependencies": ["F094", "F098"]
+    },
+    {
+      "id": "F103",
+      "name": "Render latest draft text",
+      "description": "Display the active LinkedIn post text in the draft panel.",
+      "status": "pending",
+      "dependencies": ["F102"]
+    },
+    {
+      "id": "F104",
+      "name": "Add copy draft action",
+      "description": "Let users copy the current draft text with one action.",
+      "status": "pending",
+      "dependencies": ["F060", "F103", "F013"]
+    },
+    {
+      "id": "F105",
+      "name": "Add clipboard success feedback",
+      "description": "Confirm to the user when the draft has been copied successfully.",
+      "status": "pending",
+      "dependencies": ["F012", "F104"]
+    },
+    {
+      "id": "F106",
+      "name": "Add clipboard failure feedback",
+      "description": "Show a recoverable error state when copying the draft fails.",
+      "status": "pending",
+      "dependencies": ["F012", "F104"]
+    },
+    {
+      "id": "F107",
+      "name": "Add Go to LinkedIn action",
+      "description": "Provide a direct handoff action from the draft panel to LinkedIn.",
+      "status": "pending",
+      "dependencies": ["F060", "F014"]
+    },
+    {
+      "id": "F108",
+      "name": "Open LinkedIn in new tab",
+      "description": "Launch the manual posting handoff without disrupting the current workspace session.",
+      "status": "pending",
+      "dependencies": ["F107"]
+    },
+    {
+      "id": "F109",
+      "name": "Persist active voice metadata on draft",
+      "description": "Store which voice shaped the current draft version.",
+      "status": "pending",
+      "dependencies": ["F091", "F157"]
+    },
+    {
+      "id": "F110",
+      "name": "Persist last-updated timestamp on draft",
+      "description": "Track when the active draft was last changed.",
+      "status": "pending",
+      "dependencies": ["F091", "F095"]
+    },
+    {
+      "id": "F111",
+      "name": "Render draft metadata row",
+      "description": "Display lightweight draft metadata such as voice and last updated time.",
+      "status": "pending",
+      "dependencies": ["F058", "F109", "F110"]
+    },
+    {
+      "id": "F112",
+      "name": "Add refinement trigger from later chat turns",
+      "description": "Use subsequent chat messages to revise the current draft instead of starting over.",
+      "status": "pending",
+      "dependencies": ["F072", "F098"]
+    },
+    {
+      "id": "F113",
+      "name": "Use current draft as revision input",
+      "description": "Feed the existing draft back into the generation flow during refinements.",
+      "status": "pending",
+      "dependencies": ["F094", "F112"]
+    },
+    {
+      "id": "F114",
+      "name": "Update active draft on refinement",
+      "description": "Persist revisions to the active draft record after later chat instructions.",
+      "status": "pending",
+      "dependencies": ["F095", "F112"]
+    },
+    {
+      "id": "F115",
+      "name": "Save revision snapshot on refinement",
+      "description": "Write a new revision record every time the active draft is updated.",
+      "status": "pending",
+      "dependencies": ["F092", "F114"]
+    },
+    {
+      "id": "F116",
+      "name": "Restore latest draft on thread reopen",
+      "description": "Reload the most recent active draft when a saved thread is reopened.",
+      "status": "pending",
+      "dependencies": ["F094", "F069"]
+    },
+    {
+      "id": "F117",
+      "name": "Add draft generation loading state",
+      "description": "Show that the assistant is producing or revising a draft in the right panel.",
+      "status": "pending",
+      "dependencies": ["F010", "F102"]
+    },
+    {
+      "id": "F118",
+      "name": "Add draft generation error state",
+      "description": "Explain draft generation failures without collapsing the workspace flow.",
+      "status": "pending",
+      "dependencies": ["F011", "F102"]
+    },
+    {
+      "id": "F119",
+      "name": "Keep draft visible while chat continues",
+      "description": "Preserve the right-panel deliverable while the user keeps refining via chat.",
+      "status": "pending",
+      "dependencies": ["F100", "F112"]
+    },
+    {
+      "id": "F120",
+      "name": "Prevent draft branching by default",
+      "description": "Keep v1 focused on a single active draft instead of multiple competing branches.",
+      "status": "pending",
+      "dependencies": ["F093", "F114"]
+    },
+    {
+      "id": "F121",
+      "name": "Load thread context for generation",
+      "description": "Provide the active thread messages to the assistant generation flow.",
+      "status": "pending",
+      "dependencies": ["F005", "F061", "F062"]
+    },
+    {
+      "id": "F122",
+      "name": "Load selected voice context for generation",
+      "description": "Provide the currently selected voice profile to the assistant generation flow.",
+      "status": "pending",
+      "dependencies": ["F005", "F157"]
+    },
+    {
+      "id": "F123",
+      "name": "Load imported samples for generation",
+      "description": "Provide imported writing samples to generation when a voice has them.",
+      "status": "pending",
+      "dependencies": ["F005", "F177"]
+    },
+    {
+      "id": "F124",
+      "name": "Build system prompt from product boundaries",
+      "description": "Encode v1 product constraints and desired assistant behavior in the generation system prompt.",
+      "status": "pending",
+      "dependencies": ["F005"]
+    },
+    {
+      "id": "F125",
+      "name": "Build conversation context prompt",
+      "description": "Assemble the active thread history into a clean prompt input for the assistant.",
+      "status": "pending",
+      "dependencies": ["F121"]
+    },
+    {
+      "id": "F126",
+      "name": "Classify exploratory versus ready-to-draft state",
+      "description": "Distinguish early exploratory chat from threads that are ready for draft output.",
+      "status": "pending",
+      "dependencies": ["F096", "F121", "F124", "F125"]
+    },
+    {
+      "id": "F127",
+      "name": "Avoid premature draft generation",
+      "description": "Tune the assistant to avoid creating drafts too early on low-signal threads.",
+      "status": "pending",
+      "dependencies": ["F126"]
+    },
+    {
+      "id": "F128",
+      "name": "Revise existing draft instead of branching",
+      "description": "Use the current draft as the revision target after the first draft exists.",
+      "status": "pending",
+      "dependencies": ["F113", "F120"]
+    },
+    {
+      "id": "F129",
+      "name": "Add explicit agent termination conditions",
+      "description": "Ensure every generation flow has a clear stop condition.",
+      "status": "pending",
+      "dependencies": ["F005"]
+    },
+    {
+      "id": "F130",
+      "name": "Prevent arbitrary long-running agent loops",
+      "description": "Keep the assistant bounded to the product's controlled drafting workflow.",
+      "status": "pending",
+      "dependencies": ["F129"]
+    },
+    {
+      "id": "F131",
+      "name": "Prevent non-product third-party tool calls",
+      "description": "Restrict the assistant to explicitly supported product actions only.",
+      "status": "pending",
+      "dependencies": ["F124", "F129"]
+    },
+    {
+      "id": "F132",
+      "name": "Include attached image context in generation metadata",
+      "description": "Pass the existence of an attached image into generation context without turning v1 into image generation.",
+      "status": "pending",
+      "dependencies": ["F121", "F198"]
+    },
+    {
+      "id": "F133",
+      "name": "Create structured generation result contract",
+      "description": "Return assistant outputs in a stable structure that the routes and draft pipeline can consume.",
+      "status": "pending",
+      "dependencies": ["F005", "F006"]
+    },
+    {
+      "id": "F134",
+      "name": "Log generation success audit events",
+      "description": "Record successful generation outcomes for later debugging and analysis.",
+      "status": "pending",
+      "dependencies": ["F019", "F133"]
+    },
+    {
+      "id": "F135",
+      "name": "Log generation failure audit events",
+      "description": "Record failed generation attempts for later debugging and analysis.",
+      "status": "pending",
+      "dependencies": ["F019", "F133"]
+    },
+    {
+      "id": "F136",
+      "name": "Store model identifier in audit events",
+      "description": "Capture which model produced or attempted the generation result.",
+      "status": "pending",
+      "dependencies": ["F018", "F134"]
+    },
+    {
+      "id": "F137",
+      "name": "Store generation latency in audit events",
+      "description": "Capture generation duration for performance and debugging analysis.",
+      "status": "pending",
+      "dependencies": ["F018", "F134"]
+    },
+    {
+      "id": "F138",
+      "name": "Store revision reason in audit events",
+      "description": "Persist whether a generation was an initial draft or a refinement request.",
+      "status": "pending",
+      "dependencies": ["F018", "F134"]
+    },
+    {
+      "id": "F139",
+      "name": "Honor selected voice instructions during generation",
+      "description": "Apply the chosen voice's instructions and style cues to generated drafts.",
+      "status": "pending",
+      "dependencies": ["F122", "F124"]
+    },
+    {
+      "id": "F140",
+      "name": "Honor one-draft-per-thread contract in orchestration",
+      "description": "Keep the agent orchestration aligned with the single active draft product rule.",
+      "status": "pending",
+      "dependencies": ["F128", "F133"]
+    },
+    {
+      "id": "F141",
+      "name": "Create voice profiles migration",
+      "description": "Add the persistent table for reusable writing voices.",
+      "status": "pending",
+      "dependencies": ["F003", "F021"]
+    },
+    {
+      "id": "F142",
+      "name": "Create voice samples migration",
+      "description": "Add the persistent table for imported or pasted voice samples.",
+      "status": "pending",
+      "dependencies": ["F003", "F141"]
+    },
+    {
+      "id": "F143",
+      "name": "Add voice ownership enforcement",
+      "description": "Prevent users from reading or mutating voices they do not own.",
+      "status": "pending",
+      "dependencies": ["F141", "F022"]
+    },
+    {
+      "id": "F144",
+      "name": "Create voice fetch and list helper",
+      "description": "Add shared data access for listing and loading voice profiles.",
+      "status": "pending",
+      "dependencies": ["F003", "F141"]
+    },
+    {
+      "id": "F145",
+      "name": "Create voice creation form UI",
+      "description": "Add the UI for creating a new reusable writing voice.",
+      "status": "pending",
+      "dependencies": ["F031"]
+    },
+    {
+      "id": "F146",
+      "name": "Validate voice name input",
+      "description": "Require a valid voice name before a voice can be saved.",
+      "status": "pending",
+      "dependencies": ["F007", "F145"]
+    },
+    {
+      "id": "F147",
+      "name": "Validate voice description length",
+      "description": "Constrain optional voice descriptions to a predictable size.",
+      "status": "pending",
+      "dependencies": ["F007", "F145"]
+    },
+    {
+      "id": "F148",
+      "name": "Validate voice instruction input",
+      "description": "Require voice instructions to be well-formed before persisting them.",
+      "status": "pending",
+      "dependencies": ["F007", "F145"]
+    },
+    {
+      "id": "F149",
+      "name": "Persist new voice record",
+      "description": "Save a newly created voice profile for the current user.",
+      "status": "pending",
+      "dependencies": ["F141", "F145"]
+    },
+    {
+      "id": "F150",
+      "name": "Persist voice updates",
+      "description": "Save edits to an existing voice profile.",
+      "status": "pending",
+      "dependencies": ["F141", "F145"]
+    },
+    {
+      "id": "F151",
+      "name": "Add delete voice confirmation UI",
+      "description": "Require a deliberate confirmation step before removing a voice.",
+      "status": "pending",
+      "dependencies": ["F153"]
+    },
+    {
+      "id": "F152",
+      "name": "Delete voice record",
+      "description": "Remove a saved voice profile and its associated usage path from the account.",
+      "status": "pending",
+      "dependencies": ["F141", "F151"]
+    },
+    {
+      "id": "F153",
+      "name": "Create voice list view",
+      "description": "Display all saved voices inside the lightweight settings workflow.",
+      "status": "pending",
+      "dependencies": ["F144", "F031"]
+    },
+    {
+      "id": "F154",
+      "name": "Add voice empty state",
+      "description": "Guide the user when no reusable voices have been created yet.",
+      "status": "pending",
+      "dependencies": ["F011", "F153"]
+    },
+    {
+      "id": "F155",
+      "name": "Create voice detail and edit view",
+      "description": "Show a single voice with edit controls and import options.",
+      "status": "pending",
+      "dependencies": ["F144", "F153"]
+    },
+    {
+      "id": "F156",
+      "name": "Create composer voice selector dropdown",
+      "description": "Let the user choose a saved voice directly in the chat workflow.",
+      "status": "pending",
+      "dependencies": ["F056", "F144"]
+    },
+    {
+      "id": "F157",
+      "name": "Persist selected voice on thread",
+      "description": "Store the chosen voice as part of the thread's drafting context.",
+      "status": "pending",
+      "dependencies": ["F061", "F141", "F156"]
+    },
+    {
+      "id": "F158",
+      "name": "Restore selected voice on thread reopen",
+      "description": "Reload the previously selected voice when a thread is reopened.",
+      "status": "pending",
+      "dependencies": ["F157", "F069"]
+    },
+    {
+      "id": "F159",
+      "name": "Show active voice in composer",
+      "description": "Keep the currently selected voice visible near the composer.",
+      "status": "pending",
+      "dependencies": ["F156", "F157"]
+    },
+    {
+      "id": "F160",
+      "name": "Allow switching voice mid-thread",
+      "description": "Let the user change voices during a conversation without losing prior thread state.",
+      "status": "pending",
+      "dependencies": ["F156", "F157"]
+    },
+    {
+      "id": "F161",
+      "name": "Apply new voice only to future generations",
+      "description": "Ensure a voice switch affects subsequent drafts and refinements instead of rewriting history.",
+      "status": "pending",
+      "dependencies": ["F122", "F160"]
+    },
+    {
+      "id": "F162",
+      "name": "Show active voice in draft metadata",
+      "description": "Display the voice that shaped the current draft inside the right panel.",
+      "status": "pending",
+      "dependencies": ["F111", "F157"]
+    },
+    {
+      "id": "F163",
+      "name": "Prevent selecting deleted voices",
+      "description": "Keep removed voices from remaining selectable in active threads.",
+      "status": "pending",
+      "dependencies": ["F152", "F156"]
+    },
+    {
+      "id": "F164",
+      "name": "Default voice ordering by recent use",
+      "description": "Sort available voices using the user's recent usage pattern.",
+      "status": "pending",
+      "dependencies": ["F144", "F157"]
+    },
+    {
+      "id": "F165",
+      "name": "Persist voice last-used timestamp",
+      "description": "Track when each voice was last selected so recent-use ordering is possible.",
+      "status": "pending",
+      "dependencies": ["F141", "F157"]
+    },
+    {
+      "id": "F166",
+      "name": "Add manual import entry point",
+      "description": "Provide a manual voice import action inside the voice detail workflow.",
+      "status": "pending",
+      "dependencies": ["F155"]
+    },
+    {
+      "id": "F167",
+      "name": "Add pasted-text import form",
+      "description": "Let the user paste prior writing samples directly into the product.",
+      "status": "pending",
+      "dependencies": ["F166"]
+    },
+    {
+      "id": "F168",
+      "name": "Add text-file import form",
+      "description": "Let the user upload a plain text file for manual voice enrichment.",
+      "status": "pending",
+      "dependencies": ["F166"]
+    },
+    {
+      "id": "F169",
+      "name": "Add CSV import form",
+      "description": "Let the user upload a CSV file for manual voice enrichment.",
+      "status": "pending",
+      "dependencies": ["F166"]
+    },
+    {
+      "id": "F170",
+      "name": "Validate manual import file type",
+      "description": "Reject unsupported file formats for manual voice imports.",
+      "status": "pending",
+      "dependencies": ["F007", "F168", "F169"]
+    },
+    {
+      "id": "F171",
+      "name": "Validate manual import file size",
+      "description": "Reject overly large manual import uploads before parsing.",
+      "status": "pending",
+      "dependencies": ["F007", "F168", "F169"]
+    },
+    {
+      "id": "F172",
+      "name": "Parse pasted text into sample rows",
+      "description": "Convert pasted manual input into normalized voice sample records.",
+      "status": "pending",
+      "dependencies": ["F167"]
+    },
+    {
+      "id": "F173",
+      "name": "Parse text file upload into sample rows",
+      "description": "Convert uploaded text files into normalized voice sample records.",
+      "status": "pending",
+      "dependencies": ["F168", "F170", "F171"]
+    },
+    {
+      "id": "F174",
+      "name": "Parse CSV upload into sample rows",
+      "description": "Convert uploaded CSV rows into normalized voice sample records.",
+      "status": "pending",
+      "dependencies": ["F169", "F170", "F171"]
+    },
+    {
+      "id": "F175",
+      "name": "Preview parsed manual sample count",
+      "description": "Show how many writing samples were parsed before the manual import is saved.",
+      "status": "pending",
+      "dependencies": ["F172", "F173", "F174"]
+    },
+    {
+      "id": "F176",
+      "name": "Persist manual import batch record",
+      "description": "Store a record of each manual import action for later reference.",
+      "status": "pending",
+      "dependencies": ["F018", "F141"]
+    },
+    {
+      "id": "F177",
+      "name": "Persist imported sample rows",
+      "description": "Save parsed manual sample content for a voice profile.",
+      "status": "pending",
+      "dependencies": ["F142", "F176"]
+    },
+    {
+      "id": "F178",
+      "name": "Associate imported samples to voice",
+      "description": "Link imported sample records to the selected voice profile.",
+      "status": "pending",
+      "dependencies": ["F141", "F177"]
+    },
+    {
+      "id": "F179",
+      "name": "Add manual import success summary",
+      "description": "Confirm how many samples were imported successfully after a manual import completes.",
+      "status": "pending",
+      "dependencies": ["F175", "F177"]
+    },
+    {
+      "id": "F180",
+      "name": "Add manual import failure messaging",
+      "description": "Explain parsing and save failures during manual voice import.",
+      "status": "pending",
+      "dependencies": ["F011", "F166"]
+    },
+    {
+      "id": "F181",
+      "name": "Add LinkedIn import entry point",
+      "description": "Provide a separate voice import path for LinkedIn-based retrieval when available.",
+      "status": "pending",
+      "dependencies": ["F155"]
+    },
+    {
+      "id": "F182",
+      "name": "Add LinkedIn import availability flag",
+      "description": "Gate LinkedIn import behind an explicit availability signal instead of assuming access exists.",
+      "status": "pending",
+      "dependencies": ["F017", "F181"]
+    },
+    {
+      "id": "F183",
+      "name": "Disable LinkedIn import when unavailable",
+      "description": "Prevent unusable LinkedIn import flows from appearing active when the integration is not available.",
+      "status": "pending",
+      "dependencies": ["F181", "F182"]
+    },
+    {
+      "id": "F184",
+      "name": "Add LinkedIn connection prompt placeholder",
+      "description": "Provide the user-facing entry step for LinkedIn import without assuming universal access.",
+      "status": "pending",
+      "dependencies": ["F181", "F182"]
+    },
+    {
+      "id": "F185",
+      "name": "Fetch user's own LinkedIn posts when enabled",
+      "description": "Retrieve user-owned LinkedIn writing history only when the supported integration is available.",
+      "status": "pending",
+      "dependencies": ["F181", "F182"]
+    },
+    {
+      "id": "F186",
+      "name": "Preview LinkedIn sample count",
+      "description": "Show how many writing samples will be imported from LinkedIn before saving them.",
+      "status": "pending",
+      "dependencies": ["F185"]
+    },
+    {
+      "id": "F187",
+      "name": "Persist LinkedIn import batch record",
+      "description": "Store a record of each LinkedIn import action for later reference.",
+      "status": "pending",
+      "dependencies": ["F018", "F185"]
+    },
+    {
+      "id": "F188",
+      "name": "Persist LinkedIn-derived samples",
+      "description": "Save LinkedIn import results as reusable voice samples.",
+      "status": "pending",
+      "dependencies": ["F142", "F187"]
+    },
+    {
+      "id": "F189",
+      "name": "Add fallback from blocked LinkedIn import to manual import",
+      "description": "Direct the user to manual import whenever LinkedIn import cannot proceed.",
+      "status": "pending",
+      "dependencies": ["F166", "F183"]
+    },
+    {
+      "id": "F190",
+      "name": "Add import history view on voice",
+      "description": "Show prior manual and LinkedIn import activity for a voice profile.",
+      "status": "pending",
+      "dependencies": ["F155", "F176", "F187"]
+    },
+    {
+      "id": "F191",
+      "name": "Create uploaded assets migration",
+      "description": "Add the persistent table for uploaded images associated with drafts.",
+      "status": "pending",
+      "dependencies": ["F003", "F021"]
+    },
+    {
+      "id": "F192",
+      "name": "Add image upload action in composer",
+      "description": "Let the user start an image upload from the chat composer area.",
+      "status": "pending",
+      "dependencies": ["F057"]
+    },
+    {
+      "id": "F193",
+      "name": "Restrict file picker to image types",
+      "description": "Limit uploads to supported image formats in the composer.",
+      "status": "pending",
+      "dependencies": ["F192"]
+    },
+    {
+      "id": "F194",
+      "name": "Validate image MIME type",
+      "description": "Reject non-image uploads before storage or association occurs.",
+      "status": "pending",
+      "dependencies": ["F007", "F192"]
+    },
+    {
+      "id": "F195",
+      "name": "Validate image size",
+      "description": "Reject image uploads that exceed the product's file size allowance.",
+      "status": "pending",
+      "dependencies": ["F007", "F192"]
+    },
+    {
+      "id": "F196",
+      "name": "Upload image binary to storage",
+      "description": "Store the selected image in a persistent storage location.",
+      "status": "pending",
+      "dependencies": ["F016", "F192"]
+    },
+    {
+      "id": "F197",
+      "name": "Persist uploaded asset metadata",
+      "description": "Save the uploaded image record and its storage metadata.",
+      "status": "pending",
+      "dependencies": ["F191", "F196"]
+    },
+    {
+      "id": "F198",
+      "name": "Attach uploaded asset to active draft",
+      "description": "Associate the uploaded image with the current thread draft.",
+      "status": "pending",
+      "dependencies": ["F091", "F197"]
+    },
+    {
+      "id": "F199",
+      "name": "Restore attached image on reopen",
+      "description": "Reload the draft's attached image when a thread is reopened.",
+      "status": "pending",
+      "dependencies": ["F069", "F197"]
+    },
+    {
+      "id": "F200",
+      "name": "Render attached image preview in draft panel",
+      "description": "Show the uploaded image alongside the current draft in the right panel.",
+      "status": "pending",
+      "dependencies": ["F059", "F199", "F204"]
+    },
+    {
+      "id": "F201",
+      "name": "Replace attached image with new upload",
+      "description": "Allow the active draft's image to be swapped for a newer upload.",
+      "status": "pending",
+      "dependencies": ["F192", "F198"]
+    },
+    {
+      "id": "F202",
+      "name": "Add upload progress indicator",
+      "description": "Show progress while the selected image is being uploaded.",
+      "status": "pending",
+      "dependencies": ["F010", "F192"]
+    },
+    {
+      "id": "F203",
+      "name": "Add upload failure messaging",
+      "description": "Show a clear recoverable error when image upload fails.",
+      "status": "pending",
+      "dependencies": ["F011", "F192"]
+    },
+    {
+      "id": "F204",
+      "name": "Generate secure preview URL",
+      "description": "Generate a safe URL for rendering stored uploaded images in the UI.",
+      "status": "pending",
+      "dependencies": ["F016", "F197"]
+    },
+    {
+      "id": "F205",
+      "name": "Persist asset association across sessions",
+      "description": "Keep the image attached to the draft after reloads and later revisits.",
+      "status": "pending",
+      "dependencies": ["F198", "F199"]
+    },
+    {
+      "id": "F206",
+      "name": "Implement POST /api/chat/threads route",
+      "description": "Create the route for starting a new chat thread.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F008", "F064"]
+    },
+    {
+      "id": "F207",
+      "name": "Implement GET /api/chat/threads route",
+      "description": "Create the route for listing the current user's chat threads.",
+      "status": "pending",
+      "dependencies": ["F006", "F008", "F067"]
+    },
+    {
+      "id": "F208",
+      "name": "Implement GET /api/chat/threads/:id route",
+      "description": "Create the route for loading a single thread with its current context.",
+      "status": "pending",
+      "dependencies": ["F006", "F008", "F063", "F070", "F116"]
+    },
+    {
+      "id": "F209",
+      "name": "Implement POST /api/chat/threads/:id/messages route",
+      "description": "Create the route for appending a message and triggering the assistant workflow.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F008", "F076", "F077", "F097", "F112", "F133"]
+    },
+    {
+      "id": "F210",
+      "name": "Implement GET /api/voices route",
+      "description": "Create the route for listing the current user's saved voices.",
+      "status": "pending",
+      "dependencies": ["F006", "F008", "F144"]
+    },
+    {
+      "id": "F211",
+      "name": "Implement POST /api/voices route",
+      "description": "Create the route for creating a new voice profile.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F008", "F149"]
+    },
+    {
+      "id": "F212",
+      "name": "Implement PATCH /api/voices route",
+      "description": "Create the route for updating an existing voice profile.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F008", "F150"]
+    },
+    {
+      "id": "F213",
+      "name": "Implement DELETE /api/voices route",
+      "description": "Create the route for deleting an existing voice profile.",
+      "status": "pending",
+      "dependencies": ["F006", "F008", "F152"]
+    },
+    {
+      "id": "F214",
+      "name": "Implement POST /api/voices/import-linkedin route",
+      "description": "Create the route for LinkedIn-based voice import when the integration is available.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F008", "F185", "F187", "F188"]
+    },
+    {
+      "id": "F215",
+      "name": "Implement POST /api/voices/import-manual route",
+      "description": "Create the route for manual voice import from pasted text or uploaded files.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F008", "F172", "F173", "F174", "F176", "F177"]
+    },
+    {
+      "id": "F216",
+      "name": "Implement GET /api/drafts route",
+      "description": "Create the route for loading the active draft for a thread.",
+      "status": "pending",
+      "dependencies": ["F006", "F008", "F094"]
+    },
+    {
+      "id": "F217",
+      "name": "Implement POST /api/drafts route",
+      "description": "Create the route for persisting a newly generated draft record.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F008", "F095", "F098"]
+    },
+    {
+      "id": "F218",
+      "name": "Implement PATCH /api/drafts route",
+      "description": "Create the route for updating an existing draft and its revision history.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F008", "F114", "F115"]
+    },
+    {
+      "id": "F219",
+      "name": "Implement POST /api/uploads route",
+      "description": "Create the route for validating, storing, and recording uploaded draft images.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F008", "F196", "F197"]
+    },
+    {
+      "id": "F220",
+      "name": "Implement POST /api/dev/auto-login route",
+      "description": "Create the development-only route for local seeded-account auto-login.",
+      "status": "pending",
+      "dependencies": ["F006", "F007", "F039", "F040"]
+    },
+    {
+      "id": "F221",
+      "name": "Add lightweight settings entry in sidebar",
+      "description": "Expose the settings workflow from the sidebar without introducing complex navigation.",
+      "status": "pending",
+      "dependencies": ["F051", "F031"]
+    },
+    {
+      "id": "F222",
+      "name": "Add settings panel open and close behavior",
+      "description": "Let users open and dismiss the lightweight settings experience cleanly.",
+      "status": "pending",
+      "dependencies": ["F221", "F031"]
+    },
+    {
+      "id": "F223",
+      "name": "Track time-to-first-draft event",
+      "description": "Record the elapsed time from a user's first message to their first generated draft.",
+      "status": "pending",
+      "dependencies": ["F020", "F098"]
+    },
+    {
+      "id": "F224",
+      "name": "Track draft-copied event",
+      "description": "Record when a user copies the current draft.",
+      "status": "pending",
+      "dependencies": ["F020", "F104"]
+    },
+    {
+      "id": "F225",
+      "name": "Track draft-refined event",
+      "description": "Record when an existing draft receives a refinement update.",
+      "status": "pending",
+      "dependencies": ["F020", "F114"]
+    },
+    {
+      "id": "F226",
+      "name": "Track voice-selected event",
+      "description": "Record when a user selects or switches the active writing voice.",
+      "status": "pending",
+      "dependencies": ["F020", "F157"]
+    },
+    {
+      "id": "F227",
+      "name": "Track import-completed event",
+      "description": "Record successful voice enrichment imports from manual and LinkedIn flows.",
+      "status": "pending",
+      "dependencies": ["F020", "F177", "F188"]
+    },
+    {
+      "id": "F228",
+      "name": "Add API route error logging",
+      "description": "Capture route-level failures in a consistent debugging log path.",
+      "status": "pending",
+      "dependencies": ["F019"]
+    },
+    {
+      "id": "F229",
+      "name": "Add JSON envelope compliance tests",
+      "description": "Verify all planned API routes return the standard response envelope shape.",
+      "status": "pending",
+      "dependencies": ["F006", "F206", "F207", "F208", "F209", "F210", "F211", "F212", "F213", "F214", "F215", "F216", "F217", "F218", "F219", "F220"]
+    },
+    {
+      "id": "F230",
+      "name": "Add auth guard tests",
+      "description": "Verify protected UI and API flows reject unauthenticated access correctly.",
+      "status": "pending",
+      "dependencies": ["F027", "F037"]
+    },
+    {
+      "id": "F231",
+      "name": "Add thread persistence tests",
+      "description": "Verify thread creation, listing, reopening, and message restoration behavior.",
+      "status": "pending",
+      "dependencies": ["F061", "F062", "F064", "F067", "F070"]
+    },
+    {
+      "id": "F232",
+      "name": "Add draft revision persistence tests",
+      "description": "Verify initial draft creation and later refinements create the expected revision history.",
+      "status": "pending",
+      "dependencies": ["F091", "F092", "F098", "F115"]
+    },
+    {
+      "id": "F233",
+      "name": "Add voice CRUD tests",
+      "description": "Verify voice creation, editing, deletion, and selection behaviors.",
+      "status": "pending",
+      "dependencies": ["F141", "F149", "F150", "F152", "F157"]
+    },
+    {
+      "id": "F234",
+      "name": "Add import parser tests",
+      "description": "Verify pasted text, text file, CSV, and LinkedIn import parsing behavior.",
+      "status": "pending",
+      "dependencies": ["F172", "F173", "F174", "F185"]
+    },
+    {
+      "id": "F235",
+      "name": "Add dev auto-login environment gate tests",
+      "description": "Verify auto-login works only when explicitly enabled in local development.",
+      "status": "pending",
+      "dependencies": ["F039", "F040", "F220"]
     }
   ]
 }
