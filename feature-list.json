@@ -32,7 +32,7 @@
       "id": "F005",
       "name": "Create agent orchestration module",
       "description": "Add `lib/agents/` orchestration for draft generation and revision decisions.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F002", "F004"]
     },
     {
