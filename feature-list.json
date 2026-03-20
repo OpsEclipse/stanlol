@@ -235,7 +235,7 @@
       "id": "F034",
       "name": "Add auth bootstrap loading state",
       "description": "Show a clean loading experience while the session state is being resolved.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F010", "F026"]
     },
     {
