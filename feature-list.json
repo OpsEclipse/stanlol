@@ -11,7 +11,7 @@
       "id": "F002",
       "name": "Create shared TypeScript domain types",
       "description": "Define shared application types for users, threads, messages, drafts, voices, imports, and assets.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
@@ -32,14 +32,14 @@
       "id": "F005",
       "name": "Create agent orchestration module",
       "description": "Add `lib/agents/` orchestration for draft generation and revision decisions.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F002", "F004"]
     },
     {
       "id": "F006",
       "name": "Create JSON response helper",
       "description": "Standardize API responses to the required `{ success, data, error }` envelope.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F002"]
     },
     {
@@ -88,7 +88,7 @@
       "id": "F013",
       "name": "Create clipboard utility",
       "description": "Add a shared clipboard helper for copying the current draft text.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
@@ -102,7 +102,7 @@
       "id": "F015",
       "name": "Create timestamp formatting utility",
       "description": "Add a shared formatter for thread, message, draft, and import timestamps.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
