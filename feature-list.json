@@ -1012,7 +1012,7 @@
       "id": "F145",
       "name": "Create voice creation form UI",
       "description": "Add the UI for creating a new reusable writing voice.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F031"]
     },
     {

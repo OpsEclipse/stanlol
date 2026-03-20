@@ -261,7 +261,9 @@ test("workspace page shows thread activity times in the sidebar history list", a
   const narrowScreenWorkflowNotes = findElementByAriaLabel(view, "Narrow-screen workflow notes");
   const compactWorkspaceControls = findElementByAriaLabel(view, "Compact workspace controls");
   const draftPanel = findElementByAriaLabel(view, "Draft panel");
+  const voiceCreationForm = findElementByAriaLabel(view, "Voice creation form");
   const textareas = findElementsByType(view, "textarea");
+  const inputs = findElementsByType(view, "input");
   const timeElements = findElementsByType(view, "time");
 
   assert.ok(main);
@@ -274,6 +276,7 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.ok(narrowScreenWorkflowNotes);
   assert.ok(compactWorkspaceControls);
   assert.ok(draftPanel);
+  assert.ok(voiceCreationForm);
   assert.equal(draftPanel.props.hidden, true);
   assert.equal(draftPanel.props["data-draft-panel-state"], "hidden");
   assert.match(main.props.className, /min-h-\[100dvh\]/);
@@ -298,6 +301,18 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.match(text, /Build the next reply/);
   assert.match(text, /Message composer/);
   assert.match(text, /Ready to shape/);
+  assert.match(text, /Create a reusable voice/);
+  assert.match(text, /Reusable profile/);
+  assert.match(text, /Voice name/);
+  assert.match(text, /Short description/);
+  assert.match(text, /Writing instructions/);
+  assert.match(text, /Imported samples/);
+  assert.match(text, /No samples attached yet/);
+  assert.match(text, /0 samples/);
+  assert.match(text, /Voice guidance/);
+  assert.match(text, /Concise openings/);
+  assert.match(text, /Save voice/);
+  assert.match(text, /Clear form/);
   assert.match(text, /Recent activity/);
   assert.match(text, /Launch announcement angle/);
   assert.match(text, /Quiet access to history, profile, and settings\./);
@@ -324,8 +339,12 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.match(text, /Sign out/);
   assert.match(text, /End this workspace session and return to the sign-in screen\./);
   assert.match(text, /Profile settings stay expanded on wider screens/i);
-  assert.equal(textareas.length, 1);
+  assert.equal(inputs.length, 1);
+  assert.equal(textareas.length, 3);
+  assert.match(String(inputs[0].props.defaultValue), /customer-ready operator/i);
   assert.match(String(textareas[0].props.defaultValue), /customer-facing launch update/i);
+  assert.match(String(textareas[1].props.defaultValue), /launch updates and product notes/i);
+  assert.match(String(textareas[2].props.defaultValue), /Write with a confident operator tone/i);
   assert.equal(
     forms.some((form) => form.props.action === "/auth/sign-out" && form.props.method === "post"),
     true,
@@ -333,8 +352,14 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.equal(anchors.some((anchor) => anchor.props.href === "#thread-history"), true);
   assert.equal(anchors.some((anchor) => anchor.props.href === "#current-account"), true);
   assert.equal(anchors.some((anchor) => anchor.props.href === "#workspace-settings"), true);
+  assert.equal(
+    forms.some((form) => form.props["aria-label"] === "Voice profile fields"),
+    true,
+  );
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Save thought")), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Shape response")), true);
+  assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Save voice")), true);
+  assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Clear form")), true);
   assert.equal(timeElements.length, 3);
   for (const timeElement of timeElements) {
     assert.equal(typeof timeElement.props.dateTime, "string");

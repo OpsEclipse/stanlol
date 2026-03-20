@@ -228,6 +228,17 @@ const NARROW_SCREEN_WORKSPACE_NOTES = [
   "History and profile context drop below the composer once the core workflow is already in view.",
   "Account settings compress into a lighter control card until wider breakpoints restore the full panel.",
 ] as const;
+const VOICE_CREATION_GUIDANCE = [
+  "Capture the recurring tone, pacing, and structural habits you want Stanlol to reuse.",
+  "Keep instructions concrete so later validation and saving can preserve a reliable writing profile.",
+  "Imported examples stay optional and can be attached after the core voice profile exists.",
+] as const;
+const VOICE_CREATION_TRAITS = [
+  "Concise openings",
+  "Proof-led structure",
+  "Operator language",
+  "Clear CTA endings",
+] as const;
 
 export default async function WorkspacePage() {
   const sidebarIdentity = await loadSidebarIdentity();
@@ -495,6 +506,141 @@ export default async function WorkspacePage() {
                   </p>
                 </div>
               </aside>
+              <section
+                aria-label="Voice creation form"
+                className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/30 backdrop-blur"
+              >
+                <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="max-w-xl">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-violet-100/75">
+                        Voices
+                      </p>
+                      <h3 className="mt-2 text-xl font-semibold text-white">
+                        Create a reusable voice
+                      </h3>
+                      <p className="mt-3 text-sm leading-6 text-stone-300">
+                        Shape a saved writing profile with a name, a short description, and clear
+                        guidance for how drafts should sound when this voice is selected.
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-violet-300/20 bg-violet-200/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-violet-100">
+                      Reusable profile
+                    </span>
+                  </div>
+                  <form aria-label="Voice profile fields" className="mt-5 space-y-4">
+                    <div>
+                      <label
+                        className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400"
+                        htmlFor="voice-name"
+                      >
+                        Voice name
+                      </label>
+                      <input
+                        id="voice-name"
+                        className="mt-3 h-12 w-full rounded-[1.1rem] border border-white/10 bg-white/[0.04] px-4 text-sm text-stone-100 outline-none placeholder:text-stone-500 focus:border-white/20"
+                        defaultValue="Customer-ready operator"
+                        placeholder="Customer-ready operator"
+                        type="text"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400"
+                        htmlFor="voice-description"
+                      >
+                        Short description
+                      </label>
+                      <textarea
+                        id="voice-description"
+                        className="mt-3 min-h-24 w-full rounded-[1.35rem] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-7 text-stone-100 outline-none placeholder:text-stone-500 focus:border-white/20"
+                        defaultValue="For launch updates and product notes that sound calm, informed, and operationally sharp."
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400"
+                        htmlFor="voice-instructions"
+                      >
+                        Writing instructions
+                      </label>
+                      <textarea
+                        id="voice-instructions"
+                        className="mt-3 min-h-40 w-full rounded-[1.35rem] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-7 text-stone-100 outline-none placeholder:text-stone-500 focus:border-white/20"
+                        defaultValue="Write with a confident operator tone. Open with the strongest proof point, keep paragraphs tight, avoid hype, and close with one explicit next step."
+                        rows={6}
+                      />
+                    </div>
+                    <div className="grid gap-3">
+                      <div className="rounded-[1.35rem] border border-dashed border-white/10 bg-white/[0.03] p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="max-w-lg">
+                            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400">
+                              Imported samples
+                            </p>
+                            <p className="mt-2 text-sm font-medium text-white">
+                              No samples attached yet
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-stone-300">
+                              Paste writing examples or bring in LinkedIn material after the base
+                              voice profile is named and saved.
+                            </p>
+                          </div>
+                          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-stone-300">
+                            0 samples
+                          </span>
+                        </div>
+                      </div>
+                      <div className="rounded-[1.35rem] border border-white/10 bg-white/[0.03] p-4">
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400">
+                          Voice guidance
+                        </p>
+                        <ul className="mt-3 space-y-3">
+                          {VOICE_CREATION_GUIDANCE.map((note) => (
+                            <li
+                              key={note}
+                              className="rounded-[1.1rem] border border-white/10 bg-black/20 p-3 text-sm leading-6 text-stone-200"
+                            >
+                              {note}
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {VOICE_CREATION_TRAITS.map((trait) => (
+                            <span
+                              key={trait}
+                              className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-medium text-stone-200"
+                            >
+                              {trait}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-4 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="max-w-lg text-sm leading-6 text-stone-300">
+                        Save the core voice first, then attach imported examples and selection
+                        controls in the follow-up workflow.
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-stone-100 transition hover:border-white/20 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+                          type="button"
+                        >
+                          Clear form
+                        </button>
+                        <button
+                          className="inline-flex items-center justify-center rounded-full border border-violet-300/20 bg-violet-200/10 px-4 py-2 text-sm font-semibold text-violet-100 transition hover:border-violet-200/40 hover:bg-violet-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+                          type="button"
+                        >
+                          Save voice
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </section>
               <div id="workspace-settings" className="min-h-0 flex-1">
                 <section
                   aria-label="Compact workspace controls"
