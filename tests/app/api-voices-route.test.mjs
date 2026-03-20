@@ -36,6 +36,7 @@ function compileRouteFixture(projectRoot) {
     ['from "../../../lib/authenticated-api";', 'from "../../../lib/authenticated-api.js";'],
     ['from "../../../lib/json-response";', 'from "../../../lib/json-response.js";'],
     ['from "../../../lib/validation";', 'from "../../../lib/validation.js";'],
+    ['from "../../../lib/voice-create";', 'from "../../../lib/voice-create.js";'],
     ['from "../../../lib/voice-list";', 'from "../../../lib/voice-list.js";'],
     ['from "../../../lib/voice-update";', 'from "../../../lib/voice-update.js";'],
   ]);
@@ -51,6 +52,9 @@ function compileRouteFixture(projectRoot) {
     ['from "./db.ts";', 'from "./db.js";'],
   ]);
   rewriteCompiledImports(resolve(outputDirectory, "lib/voice-update.js"), [
+    ['from "./db.ts";', 'from "./db.js";'],
+  ]);
+  rewriteCompiledImports(resolve(outputDirectory, "lib/voice-create.js"), [
     ['from "./db.ts";', 'from "./db.js";'],
   ]);
 
@@ -317,6 +321,258 @@ test("GET /api/voices returns a 500 response when voice loading fails", async (t
     assert.equal(response.status, 500);
     assert.deepEqual(await response.json(), {
       error: "Failed to list voice profiles: permission denied",
+      success: false,
+    });
+    assert.equal(mock.calls.length, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnv();
+  }
+});
+
+test("POST /api/voices returns a 401 response when the bearer token is missing", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compileRouteFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+  });
+
+  const routeModulePath = resolve(outputDirectory, "app/api/voices/route.js");
+
+  assert.equal(existsSync(routeModulePath), true);
+
+  const { POST } = await import(pathToFileURL(routeModulePath).href);
+  const response = await POST(
+    new Request("https://stanlol.test/api/voices", {
+      body: JSON.stringify({
+        instructions: "Keep the writing direct and practical.",
+        name: "Operator",
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    }),
+  );
+
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), {
+    error: "Authentication required.",
+    success: false,
+  });
+});
+
+test("POST /api/voices rejects invalid request payloads", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compileRouteFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+  });
+
+  const routeModulePath = resolve(outputDirectory, "app/api/voices/route.js");
+  const restoreEnv = setSupabaseEnv();
+  const { POST } = await import(pathToFileURL(routeModulePath).href);
+  const mock = createFetchMock((call) => {
+    const url = new URL(call.url);
+
+    if (url.pathname === "/auth/v1/user") {
+      return createJsonResponse(
+        {
+          email: "writer@example.com",
+          id: "user-123",
+        },
+        { status: 200 },
+      );
+    }
+
+    assert.fail(`Unexpected fetch request: ${call.url}`);
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mock.fetch;
+
+  try {
+    const invalidJsonResponse = await POST(
+      new Request("https://stanlol.test/api/voices", {
+        body: "{",
+        headers: {
+          authorization: "Bearer access-token",
+          "content-type": "application/json",
+        },
+        method: "POST",
+      }),
+    );
+
+    assert.equal(invalidJsonResponse.status, 400);
+    assert.deepEqual(await invalidJsonResponse.json(), {
+      error: "Invalid request payload.",
+      success: false,
+    });
+
+    const unexpectedFieldResponse = await POST(
+      new Request("https://stanlol.test/api/voices", {
+        body: JSON.stringify({
+          extra: true,
+          instructions: "Keep the writing direct and practical.",
+          name: "Operator",
+        }),
+        headers: {
+          authorization: "Bearer access-token",
+          "content-type": "application/json",
+        },
+        method: "POST",
+      }),
+    );
+
+    assert.equal(unexpectedFieldResponse.status, 400);
+    assert.deepEqual(await unexpectedFieldResponse.json(), {
+      error: "Invalid request payload.",
+      success: false,
+    });
+    assert.equal(mock.calls.length, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnv();
+  }
+});
+
+test("POST /api/voices creates a new voice for the authenticated user", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compileRouteFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+  });
+
+  const routeModulePath = resolve(outputDirectory, "app/api/voices/route.js");
+  const restoreEnv = setSupabaseEnv();
+  const { POST } = await import(pathToFileURL(routeModulePath).href);
+  const createdVoice = {
+    created_at: "2026-03-19T22:00:00.000Z",
+    description: "Calm product updates with crisp transitions.",
+    id: "voice-123",
+    instructions: "Lead with the strongest proof point, keep paragraphs short, and close with one next step.",
+    name: "Operator",
+    updated_at: "2026-03-19T22:00:00.000Z",
+    user_id: "user-123",
+  };
+  const mock = createFetchMock(async (call) => {
+    const url = new URL(call.url);
+
+    if (url.pathname === "/auth/v1/user") {
+      return createJsonResponse(
+        {
+          email: "writer@example.com",
+          id: "user-123",
+        },
+        { status: 200 },
+      );
+    }
+
+    if (url.pathname === "/rest/v1/voice_profiles") {
+      assert.equal(call.init?.method, "POST");
+      assert.equal(url.searchParams.get("select"), "id,user_id,name,description,instructions,created_at,updated_at");
+
+      const body = JSON.parse(call.init.body);
+      assert.deepEqual(body, {
+        description: "Calm product updates with crisp transitions.",
+        instructions: "Lead with the strongest proof point, keep paragraphs short, and close with one next step.",
+        name: "Operator",
+        user_id: "user-123",
+      });
+
+      return createJsonResponse([createdVoice], { status: 201 });
+    }
+
+    assert.fail(`Unexpected fetch request: ${call.url}`);
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mock.fetch;
+
+  try {
+    const response = await POST(
+      new Request("https://stanlol.test/api/voices", {
+        body: JSON.stringify({
+          description: "  Calm product updates with crisp transitions.  ",
+          instructions:
+            "  Lead with the strongest proof point, keep paragraphs short, and close with one next step.  ",
+          name: "  Operator  ",
+        }),
+        headers: {
+          authorization: "Bearer access-token",
+          "content-type": "application/json",
+        },
+        method: "POST",
+      }),
+    );
+
+    assert.equal(response.status, 201);
+    assert.deepEqual(await response.json(), {
+      data: {
+        voice: createdVoice,
+      },
+      success: true,
+    });
+    assert.equal(mock.calls.length, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnv();
+  }
+});
+
+test("POST /api/voices returns a 500 response when voice creation fails", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compileRouteFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+  });
+
+  const routeModulePath = resolve(outputDirectory, "app/api/voices/route.js");
+  const restoreEnv = setSupabaseEnv();
+  const { POST } = await import(pathToFileURL(routeModulePath).href);
+  const mock = createFetchMock((call) => {
+    const url = new URL(call.url);
+
+    if (url.pathname === "/auth/v1/user") {
+      return createJsonResponse(
+        {
+          email: "writer@example.com",
+          id: "user-123",
+        },
+        { status: 200 },
+      );
+    }
+
+    if (url.pathname === "/rest/v1/voice_profiles") {
+      return createJsonResponse({ message: "permission denied" }, { status: 500 });
+    }
+
+    assert.fail(`Unexpected fetch request: ${call.url}`);
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mock.fetch;
+
+  try {
+    const response = await POST(
+      new Request("https://stanlol.test/api/voices", {
+        body: JSON.stringify({
+          description: "Calm product updates with precise transitions.",
+          instructions: "Keep the writing direct and practical.",
+          name: "Operator",
+        }),
+        headers: {
+          authorization: "Bearer access-token",
+          "content-type": "application/json",
+        },
+        method: "POST",
+      }),
+    );
+
+    assert.equal(response.status, 500);
+    assert.deepEqual(await response.json(), {
+      error: "Failed to create voice profile: permission denied",
       success: false,
     });
     assert.equal(mock.calls.length, 2);

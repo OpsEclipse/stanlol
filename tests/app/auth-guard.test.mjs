@@ -140,6 +140,7 @@ function compileVoicesRouteFixture(projectRoot) {
     ['from "../../../lib/authenticated-api";', 'from "../../../lib/authenticated-api.js";'],
     ['from "../../../lib/json-response";', 'from "../../../lib/json-response.js";'],
     ['from "../../../lib/validation";', 'from "../../../lib/validation.js";'],
+    ['from "../../../lib/voice-create";', 'from "../../../lib/voice-create.js";'],
     ['from "../../../lib/voice-list";', 'from "../../../lib/voice-list.js";'],
     ['from "../../../lib/voice-update";', 'from "../../../lib/voice-update.js";'],
   ]);
@@ -155,6 +156,9 @@ function compileVoicesRouteFixture(projectRoot) {
     ['from "./db.ts";', 'from "./db.js";'],
   ]);
   rewriteCompiledImports(resolve(outputDirectory, "lib/voice-update.js"), [
+    ['from "./db.ts";', 'from "./db.js";'],
+  ]);
+  rewriteCompiledImports(resolve(outputDirectory, "lib/voice-create.js"), [
     ['from "./db.ts";', 'from "./db.js";'],
   ]);
 
@@ -301,6 +305,22 @@ test("protected API routes reject unauthenticated requests with a 401 response",
     },
     {
       invoke: () =>
+        voicesModule.POST(
+          new Request("https://stanlol.test/api/voices", {
+            body: JSON.stringify({
+              instructions: "Keep the writing direct and practical.",
+              name: "Operator",
+            }),
+            headers: {
+              "content-type": "application/json",
+            },
+            method: "POST",
+          }),
+        ),
+      name: "POST /api/voices without a bearer token",
+    },
+    {
+      invoke: () =>
         voicesModule.PATCH(
           new Request("https://stanlol.test/api/voices", {
             body: JSON.stringify({
@@ -389,6 +409,23 @@ test("protected API routes return a 401 response when bearer token verification 
               }),
             ),
           name: "GET /api/voices",
+        },
+        {
+          invoke: () =>
+            voicesModule.POST(
+              new Request("https://stanlol.test/api/voices", {
+                body: JSON.stringify({
+                  instructions: "Keep the writing direct and practical.",
+                  name: "Operator",
+                }),
+                headers: {
+                  authorization: "Bearer expired-token",
+                  "content-type": "application/json",
+                },
+                method: "POST",
+              }),
+            ),
+          name: "POST /api/voices",
         },
         {
           invoke: () =>
