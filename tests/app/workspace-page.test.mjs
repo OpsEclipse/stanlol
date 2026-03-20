@@ -375,9 +375,9 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.match(text, /Save edits/);
   assert.match(text, /Reset edits/);
   assert.match(text, /Import options/);
-  assert.match(text, /2 paths staged/);
+  assert.match(text, /1 ready, 1 gated/);
   assert.match(text, /Prior writing samples/);
-  assert.match(text, /Manual import pending/);
+  assert.match(text, /Open manual import/);
   assert.match(text, /Profile and post history/);
   assert.match(text, /LinkedIn import pending/);
   assert.match(text, /Customer-ready operator/);
@@ -448,6 +448,15 @@ test("workspace page shows thread activity times in the sidebar history list", a
     true,
   );
   assert.equal(forms.some((form) => form.props["aria-label"] === "Voice detail editor"), true);
+  assert.equal(
+    forms.some(
+      (form) =>
+        form.props["aria-label"] === "Manual voice import action" &&
+        form.props.action === "/workspace" &&
+        form.props.method === "get",
+    ),
+    true,
+  );
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Save thought")), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Shape response")), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Save voice")), true);
@@ -455,7 +464,7 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Save edits")), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Reset edits")), true);
   assert.equal(
-    buttons.some((button) => collectText(button).join(" ").includes("Manual import pending")),
+    buttons.some((button) => collectText(button).join(" ").includes("Open manual import")),
     true,
   );
   assert.equal(
@@ -514,6 +523,82 @@ test("workspace page appends a submitted composer message into the active thread
   assert.match(text, /Keep the CTA to one sentence and make the pilot result the first line\./);
   assert.equal(
     textareas.some((textarea) => textarea.props.id === "workspace-message-composer" && textarea.props.defaultValue === ""),
+    true,
+  );
+});
+
+test("workspace page opens the staged manual import workflow inside voice detail", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compilePageFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+    delete globalThis.__stanlolWorkspaceCookies;
+    delete globalThis.__stanlolWorkspaceProfile;
+    delete globalThis.__stanlolWorkspaceVoices;
+  });
+
+  const pageModulePath = resolve(outputDirectory, "app/workspace/page.js");
+
+  assert.equal(existsSync(pageModulePath), true);
+
+  globalThis.__stanlolWorkspaceCookies = new Map([
+    ["stanlol-access-token", { value: "header.eyJlbWFpbCI6IndyaXRlckBleGFtcGxlLmNvbSIsIm5hbWUiOiJTdGFuIFdyaXRlciJ9.signature" }],
+  ]);
+  globalThis.__stanlolWorkspaceProfile = {
+    created_at: "2026-03-19T20:00:00.000Z",
+    display_name: "Stan Writer",
+    email: "writer@example.com",
+    id: "user-123",
+    updated_at: "2026-03-19T20:15:00.000Z",
+  };
+  globalThis.__stanlolWorkspaceVoices = [
+    {
+      created_at: "2026-03-19T21:00:00.000Z",
+      description: "Proof-first notes for customer-facing updates.",
+      id: "voice-123",
+      instructions: "Lead with evidence, keep the tone calm, and close with one CTA.",
+      name: "Customer-ready operator",
+      updated_at: "2026-03-19T21:10:00.000Z",
+      user_id: "user-123",
+    },
+  ];
+
+  const pageModule = await import(pathToFileURL(pageModulePath).href);
+  const view = resolveElementTree(
+    await pageModule.default({
+      searchParams: Promise.resolve({
+        voiceId: "voice-123",
+        voiceImport: "manual",
+      }),
+    }),
+  );
+  const text = collectText(view).join(" ");
+  const manualVoiceImport = findElementByAriaLabel(view, "Manual voice import");
+  const manualImportSources = findElementByAriaLabel(view, "Manual import sources");
+  const forms = findElementsByType(view, "form");
+  const buttons = findElementsByType(view, "button");
+
+  assert.ok(manualVoiceImport);
+  assert.ok(manualImportSources);
+  assert.match(text, /Manual import/);
+  assert.match(text, /Bring source material into\s+Customer-ready operator/);
+  assert.match(text, /3 sources staged/);
+  assert.match(text, /Paste prior writing/);
+  assert.match(text, /Upload a text file/);
+  assert.match(text, /Upload a CSV export/);
+  assert.match(text, /Back to voice detail/);
+  assert.equal(
+    forms.some(
+      (form) =>
+        form.props["aria-label"] === "Close manual voice import" &&
+        form.props.action === "/workspace" &&
+        form.props.method === "get",
+    ),
+    true,
+  );
+  assert.equal(
+    buttons.some((button) => collectText(button).join(" ").includes("Back to voice detail")),
     true,
   );
 });

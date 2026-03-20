@@ -15,6 +15,9 @@ import { listVoiceProfiles, type VoiceProfileRow } from "../../lib/voice-list.js
 
 const ACCESS_TOKEN_COOKIE_NAME = "stanlol-access-token";
 const SIGN_OUT_PATH = "/auth/sign-out";
+const VOICE_ID_SEARCH_PARAM = "voiceId";
+const VOICE_IMPORT_SEARCH_PARAM = "voiceImport";
+const MANUAL_VOICE_IMPORT_MODE = "manual";
 
 interface SidebarIdentity {
   displayName: string | null;
@@ -207,6 +210,23 @@ function getVoiceCreatedLabel(createdAt: string): string {
   return "Created recently";
 }
 
+function getSelectedVoiceProfile(
+  voiceProfiles: ReadonlyArray<VoiceProfileRow>,
+  searchParams: WorkspaceSearchParams,
+): VoiceProfileRow | null {
+  const requestedVoiceId = readSearchParamValue(searchParams[VOICE_ID_SEARCH_PARAM]);
+
+  if (requestedVoiceId) {
+    const selectedVoiceProfile = voiceProfiles.find((voiceProfile) => voiceProfile.id === requestedVoiceId);
+
+    if (selectedVoiceProfile) {
+      return selectedVoiceProfile;
+    }
+  }
+
+  return voiceProfiles[0] ?? null;
+}
+
 function SavedVoiceList({
   showHeader = false,
   voiceProfiles,
@@ -263,11 +283,11 @@ function SavedVoiceList({
 
 const VOICE_IMPORT_OPTIONS = [
   {
-    buttonLabel: "Manual import pending",
+    buttonLabel: "Open manual import",
     description:
-      "Bring in pasted writing samples or file-based examples once the manual import flow lands.",
+      "Open the staged manual import workflow for pasted samples, text files, and CSV-based examples.",
     eyebrow: "Manual",
-    status: "Next",
+    status: "Ready",
     title: "Prior writing samples",
   },
   {
@@ -280,9 +300,32 @@ const VOICE_IMPORT_OPTIONS = [
   },
 ] as const;
 
+const MANUAL_IMPORT_SOURCE_OPTIONS = [
+  {
+    description: "Start with copied posts, notes, or announcements once pasted-text import lands.",
+    eyebrow: "Paste",
+    status: "Next",
+    title: "Paste prior writing",
+  },
+  {
+    description: "Upload a plain text document when the file-based import path is connected.",
+    eyebrow: "Text file",
+    status: "Next",
+    title: "Upload a text file",
+  },
+  {
+    description: "Bring in structured exports after the CSV import parser is available.",
+    eyebrow: "CSV",
+    status: "Next",
+    title: "Upload a CSV export",
+  },
+] as const;
+
 function SavedVoiceDetail({
+  isManualImportOpen,
   voiceProfile,
 }: {
+  isManualImportOpen: boolean;
   voiceProfile: Readonly<VoiceProfileRow> | null;
 }) {
   if (!voiceProfile) {
@@ -395,12 +438,12 @@ function SavedVoiceDetail({
               Import options
             </p>
             <p className="mt-2 text-sm leading-6 text-stone-300">
-              Expand this voice with examples once the manual and LinkedIn import entry points are
-              connected.
+              Expand this voice with examples by opening the manual import workflow now, or use the
+              LinkedIn path once that gated connection is available.
             </p>
           </div>
           <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-stone-300">
-            2 paths staged
+            1 ready, 1 gated
           </span>
         </div>
         <div aria-label="Voice import options" className="mt-4 grid gap-3">
@@ -421,16 +464,102 @@ function SavedVoiceDetail({
                   {option.status}
                 </span>
               </div>
-              <button
-                className="mt-4 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-stone-400"
-                disabled
-                type="button"
-              >
-                {option.buttonLabel}
-              </button>
+              {option.eyebrow === "Manual" ? (
+                <form
+                  action="/workspace"
+                  aria-label="Manual voice import action"
+                  className="mt-4"
+                  method="get"
+                >
+                  <input name={VOICE_ID_SEARCH_PARAM} type="hidden" value={voiceProfile.id} />
+                  <input
+                    name={VOICE_IMPORT_SEARCH_PARAM}
+                    type="hidden"
+                    value={MANUAL_VOICE_IMPORT_MODE}
+                  />
+                  <button
+                    className="inline-flex items-center justify-center rounded-full border border-amber-300/25 bg-amber-200/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:border-amber-200/40 hover:bg-amber-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+                    type="submit"
+                  >
+                    {option.buttonLabel}
+                  </button>
+                </form>
+              ) : (
+                <button
+                  className="mt-4 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-stone-400"
+                  disabled
+                  type="button"
+                >
+                  {option.buttonLabel}
+                </button>
+              )}
             </article>
           ))}
         </div>
+        {isManualImportOpen ? (
+          <section
+            aria-label="Manual voice import"
+            className="mt-4 rounded-[1.35rem] border border-amber-300/20 bg-amber-200/[0.07] p-4"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="max-w-xl">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-amber-100/80">
+                  Manual import
+                </p>
+                <h5 className="mt-2 text-sm font-semibold text-white">
+                  Bring source material into {voiceProfile.name}
+                </h5>
+                <p className="mt-2 text-sm leading-6 text-stone-200">
+                  Choose the manual source you want to use. Pasted text, plain text uploads, and
+                  CSV uploads all begin from this saved-voice workflow.
+                </p>
+              </div>
+              <span className="rounded-full border border-amber-200/20 bg-black/20 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-amber-100">
+                3 sources staged
+              </span>
+            </div>
+            <div aria-label="Manual import sources" className="mt-4 grid gap-3 sm:grid-cols-3">
+              {MANUAL_IMPORT_SOURCE_OPTIONS.map((option) => (
+                <article
+                  key={option.title}
+                  className="rounded-[1.2rem] border border-white/10 bg-black/20 p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-amber-100/80">
+                        {option.eyebrow}
+                      </p>
+                      <h6 className="mt-2 text-sm font-semibold text-white">{option.title}</h6>
+                      <p className="mt-2 text-sm leading-6 text-stone-300">{option.description}</p>
+                    </div>
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-stone-300">
+                      {option.status}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="mt-4 flex flex-col gap-4 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-lg text-sm leading-6 text-stone-200">
+                Manual imports stay attached to this voice detail workflow so source material is
+                always scoped to the saved profile you are editing.
+              </p>
+              <form
+                action="/workspace"
+                aria-label="Close manual voice import"
+                method="get"
+              >
+                <input name={VOICE_ID_SEARCH_PARAM} type="hidden" value={voiceProfile.id} />
+                <button
+                  className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-stone-100 transition hover:border-white/20 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+                  type="submit"
+                >
+                  Back to voice detail
+                </button>
+              </form>
+            </div>
+          </section>
+        ) : null}
       </div>
     </section>
   );
@@ -584,7 +713,12 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
   const conversationMessages = getWorkspaceConversationMessages(resolvedSearchParams);
   const composerDraft =
     readSearchParamValue(resolvedSearchParams.message) === null ? INITIAL_COMPOSER_DRAFT : "";
-  const featuredVoiceProfile = voiceProfiles[0] ?? null;
+  const featuredVoiceProfile = getSelectedVoiceProfile(voiceProfiles, resolvedSearchParams);
+  const isManualImportOpen =
+    readSearchParamValue(resolvedSearchParams[VOICE_IMPORT_SEARCH_PARAM]) ===
+      MANUAL_VOICE_IMPORT_MODE &&
+    featuredVoiceProfile !== null &&
+    readSearchParamValue(resolvedSearchParams[VOICE_ID_SEARCH_PARAM]) === featuredVoiceProfile.id;
 
   return (
     <main className="relative min-h-[100dvh] overflow-y-auto bg-stone-950 text-stone-100 lg:h-[100dvh] lg:min-h-screen lg:overflow-hidden">
@@ -1026,7 +1160,10 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                     <div className="mt-5 border-t border-white/10 pt-4">
                       <SavedVoiceList showHeader voiceProfiles={voiceProfiles} />
                       <div className="mt-4">
-                        <SavedVoiceDetail voiceProfile={featuredVoiceProfile} />
+                        <SavedVoiceDetail
+                          isManualImportOpen={isManualImportOpen}
+                          voiceProfile={featuredVoiceProfile}
+                        />
                       </div>
                     </div>
                     <form action={SIGN_OUT_PATH} className="mt-5 border-t border-white/10 pt-4" method="post">
@@ -1084,7 +1221,10 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                     title="Saved voices"
                   >
                     <SavedVoiceList voiceProfiles={voiceProfiles} />
-                    <SavedVoiceDetail voiceProfile={featuredVoiceProfile} />
+                    <SavedVoiceDetail
+                      isManualImportOpen={isManualImportOpen}
+                      voiceProfile={featuredVoiceProfile}
+                    />
                   </AccountSettingsSection>
                   <AccountSettingsSection
                     description="Session controls stay separate so account exit remains obvious even as more settings land in this panel."

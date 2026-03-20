@@ -102,3 +102,4 @@ Blocked Feature #F177 Persist imported sample rows — added `lib/voice-samples.
 ✓ Feature #F072 Submit user message from composer — done
 ✓ Feature #F076 Persist user message row — done
 ✓ Feature #F211 Implement POST /api/voices route — done
+✓ Feature #F166 Add manual import entry point — done
