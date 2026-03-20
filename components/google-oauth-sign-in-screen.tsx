@@ -1,14 +1,45 @@
 export const GOOGLE_OAUTH_PATH = "/auth/callback?provider=google";
+export const MAGIC_LINK_REQUEST_PATH = "/auth/magic-link";
 
 export const GOOGLE_OAUTH_COPY = {
   badge: "Workspace sign-in",
-  title: "Sign in with Google to enter Stanlol.",
+  title: "Sign in to Stanlol and enter the workspace.",
   description:
-    "Use your Google account to open the authenticated workspace, recover prior conversations, and keep your writing context attached to one profile.",
+    "Choose Google OAuth or an email magic link to open the authenticated workspace, recover prior conversations, and keep your writing context attached to one profile.",
   buttonLabel: "Continue with Google",
-  privacyNote: "Google OAuth is the only sign-in path available on this screen.",
+  privacyNote:
+    "Google OAuth and email magic links both return through the protected auth callback before workspace access is granted.",
   supportLabel: "Protected workspace access",
 } as const;
+
+export const MAGIC_LINK_COPY = {
+  buttonLabel: "Email me a magic link",
+  description:
+    "Send a one-time sign-in link to your inbox and finish authentication from email without using Google.",
+  emailLabel: "Work email",
+  statusLabel: "Email link status",
+  supportLabel: "Passwordless sign-in",
+  title: "Request a secure email link.",
+} as const;
+
+export const MAGIC_LINK_STATUS_COPY = {
+  failed: {
+    description:
+      "Stanlol could not send the email sign-in link. Try again in a moment.",
+    title: "Magic link request failed.",
+  },
+  invalid_email: {
+    description: "Enter a valid email address before requesting a sign-in link.",
+    title: "A valid email address is required.",
+  },
+  sent: {
+    description:
+      "If that email can access this workspace, the sign-in link is on its way now.",
+    title: "Check your inbox.",
+  },
+} as const;
+
+type MagicLinkStatusCode = keyof typeof MAGIC_LINK_STATUS_COPY;
 
 export const AUTH_ERROR_COPY = {
   auth_callback_failed: {
@@ -64,6 +95,30 @@ export function getAuthErrorCopy(value: string | string[] | null | undefined) {
   return AUTH_ERROR_COPY[code as AuthErrorCode] ?? AUTH_ERROR_COPY.auth_callback_failed;
 }
 
+function normalizeSearchParam(value: string | string[] | null | undefined): string | null {
+  if (Array.isArray(value)) {
+    return normalizeSearchParam(value[0]);
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+
+  return normalized.length > 0 ? normalized : null;
+}
+
+export function getMagicLinkStatusCopy(value: string | string[] | null | undefined) {
+  const code = normalizeSearchParam(value)?.toLowerCase();
+
+  if (!code) {
+    return null;
+  }
+
+  return MAGIC_LINK_STATUS_COPY[code as MagicLinkStatusCode] ?? MAGIC_LINK_STATUS_COPY.failed;
+}
+
 function GoogleMark() {
   return (
     <svg
@@ -95,10 +150,18 @@ function GoogleMark() {
 
 export type GoogleOAuthSignInScreenProps = {
   authErrorCode?: string | string[];
+  magicLinkEmail?: string | string[];
+  magicLinkStatus?: string | string[];
 };
 
-export function GoogleOAuthSignInScreen({ authErrorCode }: GoogleOAuthSignInScreenProps) {
+export function GoogleOAuthSignInScreen({
+  authErrorCode,
+  magicLinkEmail,
+  magicLinkStatus,
+}: GoogleOAuthSignInScreenProps) {
   const authError = getAuthErrorCopy(authErrorCode);
+  const magicLinkFeedback = getMagicLinkStatusCopy(magicLinkStatus);
+  const normalizedMagicLinkEmail = normalizeSearchParam(magicLinkEmail) ?? "";
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-stone-950 px-6 py-12 text-stone-100">
@@ -125,7 +188,7 @@ export function GoogleOAuthSignInScreen({ authErrorCode }: GoogleOAuthSignInScre
           <div className="grid gap-3 text-sm text-stone-300 sm:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/6 p-4">
               <p className="text-xs uppercase tracking-[0.24em] text-stone-400">Identity</p>
-              <p className="mt-2 text-base font-medium text-white">Google-authenticated</p>
+              <p className="mt-2 text-base font-medium text-white">Google or email link</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/6 p-4">
               <p className="text-xs uppercase tracking-[0.24em] text-stone-400">Access</p>
@@ -139,19 +202,6 @@ export function GoogleOAuthSignInScreen({ authErrorCode }: GoogleOAuthSignInScre
         </div>
 
         <div className="flex flex-col justify-between gap-8 rounded-[1.5rem] border border-white/12 bg-stone-100 p-6 text-stone-950 md:p-8">
-          <div className="space-y-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-500">
-              {GOOGLE_OAUTH_COPY.supportLabel}
-            </p>
-            <h2 className="text-2xl font-semibold tracking-tight text-stone-950">
-              Continue with a Google account.
-            </h2>
-            <p className="text-sm leading-6 text-stone-600">
-              This starts the Google OAuth flow and returns the user to the app for authenticated
-              workspace access.
-            </p>
-          </div>
-
           <div className="space-y-4">
             {authError ? (
               <section
@@ -166,13 +216,89 @@ export function GoogleOAuthSignInScreen({ authErrorCode }: GoogleOAuthSignInScre
                 <p className="mt-2 text-sm leading-6 text-rose-900/90">{authError.description}</p>
               </section>
             ) : null}
-            <a
-              href={GOOGLE_OAUTH_PATH}
-              className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-stone-950 px-5 py-4 text-base font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5 hover:bg-stone-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-stone-950"
-            >
-              <GoogleMark />
-              <span>{GOOGLE_OAUTH_COPY.buttonLabel}</span>
-            </a>
+
+            <section className="space-y-3 rounded-[1.5rem] border border-stone-200 bg-white px-4 py-4 shadow-sm">
+              <div className="space-y-2">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-500">
+                  {GOOGLE_OAUTH_COPY.supportLabel}
+                </p>
+                <h2 className="text-2xl font-semibold tracking-tight text-stone-950">
+                  Continue with Google.
+                </h2>
+                <p className="text-sm leading-6 text-stone-600">
+                  Start the Google OAuth flow and return to the app for authenticated workspace
+                  access.
+                </p>
+              </div>
+              <a
+                href={GOOGLE_OAUTH_PATH}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-stone-950 px-5 py-4 text-base font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5 hover:bg-stone-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-stone-950"
+              >
+                <GoogleMark />
+                <span>{GOOGLE_OAUTH_COPY.buttonLabel}</span>
+              </a>
+            </section>
+
+            <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-stone-400">
+              <span className="h-px flex-1 bg-stone-200" />
+              <span>or</span>
+              <span className="h-px flex-1 bg-stone-200" />
+            </div>
+
+            <section className="space-y-4 rounded-[1.5rem] border border-stone-200 bg-white px-4 py-4 shadow-sm">
+              <div className="space-y-2">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-500">
+                  {MAGIC_LINK_COPY.supportLabel}
+                </p>
+                <h2 className="text-2xl font-semibold tracking-tight text-stone-950">
+                  {MAGIC_LINK_COPY.title}
+                </h2>
+                <p className="text-sm leading-6 text-stone-600">{MAGIC_LINK_COPY.description}</p>
+              </div>
+
+              {magicLinkFeedback ? (
+                <section
+                  aria-live="polite"
+                  className="rounded-[1.25rem] border border-emerald-200 bg-emerald-50 px-4 py-4 text-left text-emerald-950 shadow-sm shadow-emerald-200/60"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
+                    {MAGIC_LINK_COPY.statusLabel}
+                  </p>
+                  <h3 className="mt-2 text-base font-semibold">{magicLinkFeedback.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-emerald-900/90">
+                    {magicLinkFeedback.description}
+                  </p>
+                </section>
+              ) : null}
+
+              <form action={MAGIC_LINK_REQUEST_PATH} method="post" className="space-y-4">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="magic-link-email"
+                    className="text-sm font-medium text-stone-700"
+                  >
+                    {MAGIC_LINK_COPY.emailLabel}
+                  </label>
+                  <input
+                    id="magic-link-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    defaultValue={normalizedMagicLinkEmail}
+                    className="w-full rounded-2xl border border-stone-300 bg-stone-50 px-4 py-3 text-base text-stone-950 outline-none transition focus:border-stone-950 focus:bg-white focus:ring-2 focus:ring-stone-200"
+                    placeholder="you@company.com"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-stone-950 px-5 py-4 text-base font-semibold text-stone-950 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-stone-950 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-stone-950"
+                >
+                  {MAGIC_LINK_COPY.buttonLabel}
+                </button>
+              </form>
+            </section>
+
             <p className="text-sm leading-6 text-stone-500">{GOOGLE_OAUTH_COPY.privacyNote}</p>
           </div>
         </div>
