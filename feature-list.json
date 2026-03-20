@@ -116,7 +116,7 @@
       "id": "F017",
       "name": "Create local-only feature flag helper",
       "description": "Add a single helper for development-only capabilities such as auto-login.",
-      "status": "blocked",
+      "status": "done",
       "dependencies": ["F001"]
     },
     {
