@@ -11,7 +11,7 @@
       "id": "F002",
       "name": "Create shared TypeScript domain types",
       "description": "Define shared application types for users, threads, messages, drafts, voices, imports, and assets.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
