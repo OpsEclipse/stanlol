@@ -1,4 +1,4 @@
-import { generateText, type OpenAiMessage } from "../ai";
+import { generateText, type OpenAiMessage } from "../ai.ts";
 
 export const AGENT_PROMPT_VERSION = "draft-orchestration-v1";
 export const MAX_AGENT_STEPS = 2;
@@ -8,6 +8,7 @@ export const REVISION_DECISION_OUTPUT_VERSION = "revision-decision-v1";
 export type RevisionDecisionAction = "keep" | "revise";
 export type DraftOperation = "create" | "retain" | "revise";
 export type DraftResultStatus = "generated" | "unchanged";
+export type DraftWorkflowMessageRole = "assistant" | "user";
 export type AgentTerminationReason =
   | "draft-created"
   | "draft-revised"
@@ -83,13 +84,23 @@ interface AgentDependencies {
   generateText?: typeof generateText;
 }
 
+interface DraftWorkflowMessage {
+  content: string;
+  role: DraftWorkflowMessageRole;
+}
+
 const DRAFT_GENERATION_INSTRUCTIONS = [
   "You are the orchestration layer for a LinkedIn drafting assistant.",
   "Product rules:",
+  "- Supported actions only: clarify the draft request, generate the first active draft, or revise the current active draft.",
   "- Maintain exactly one active draft per thread.",
   "- If a current draft exists, revise that draft instead of branching.",
+  "- Only act on the latest user-authored drafting turn.",
+  "- Do not continue from assistant-authored turns or self-directed loops.",
   "- Use the selected voice when provided.",
   "- Treat attached image details as supporting context only.",
+  "- Never publish, schedule, browse, scrape, import third-party content, or call unsupported third-party tools.",
+  "- If the user asks for anything outside the supported actions, stay inside the drafting workflow instead of simulating external actions.",
   "- Return only the final draft text with no analysis or markdown.",
   "Termination condition: return exactly one completed draft and stop immediately.",
 ].join("\n");
@@ -99,6 +110,8 @@ const REVISION_DECISION_INSTRUCTIONS = [
   "Return JSON only in this shape:",
   '{"action":"keep"|"revise","reason":"short explanation"}',
   "Choose keep when the latest user turn is conversational, exploratory, or does not ask for a draft change.",
+  "Only evaluate the latest user-authored drafting turn. Do not continue assistant-authored loops.",
+  "Unsupported requests such as publishing, scheduling, browsing, scraping, or third-party tool use are outside the product workflow and must not trigger external actions.",
   "Termination condition: make one classification and stop.",
 ].join("\n");
 
@@ -121,33 +134,45 @@ function normalizeOptionalText(value: string | null | undefined): string | null 
   return normalizedValue === "" ? null : normalizedValue;
 }
 
-function normalizeMessages(messages: OpenAiMessage[]): OpenAiMessage[] {
+function readWorkflowMessageRole(
+  role: OpenAiMessage["role"],
+  fieldName: string,
+): DraftWorkflowMessageRole {
+  if (role === "assistant" || role === "user") {
+    return role;
+  }
+
+  throw new AgentError(
+    `${fieldName} must use the controlled drafting workflow roles 'user' or 'assistant'.`,
+    "invalid-input",
+  );
+}
+
+function normalizeMessages(messages: OpenAiMessage[]): DraftWorkflowMessage[] {
   if (messages.length === 0) {
     throw new AgentError("Draft orchestration requires at least one message.", "invalid-input");
   }
 
   return messages.map((message, index) => ({
     content: readRequiredText(message.content, `Message ${index + 1} content`),
-    role: message.role,
+    role: readWorkflowMessageRole(message.role, `Message ${index + 1} role`),
   }));
 }
 
-function getLatestUserMessage(messages: OpenAiMessage[]): string {
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index];
+function getLatestUserMessage(messages: DraftWorkflowMessage[]): string {
+  const latestMessage = messages.at(-1);
 
-    if (message?.role === "user") {
-      return message.content;
-    }
+  if (latestMessage?.role === "user") {
+    return latestMessage.content;
   }
 
   throw new AgentError(
-    "Draft orchestration requires at least one user message.",
+    "Draft orchestration requires the latest workflow turn to be a user message.",
     "invalid-input",
   );
 }
 
-function serializeConversation(messages: OpenAiMessage[]): string {
+function serializeConversation(messages: DraftWorkflowMessage[]): string {
   return messages
     .map((message, index) => `${index + 1}. ${message.role.toUpperCase()}: ${message.content}`)
     .join("\n");

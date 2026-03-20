@@ -907,14 +907,14 @@
       "id": "F130",
       "name": "Prevent arbitrary long-running agent loops",
       "description": "Keep the assistant bounded to the product's controlled drafting workflow.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F129"]
     },
     {
       "id": "F131",
       "name": "Prevent non-product third-party tool calls",
       "description": "Restrict the assistant to explicitly supported product actions only.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F124", "F129"]
     },
     {

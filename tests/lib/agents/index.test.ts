@@ -1,7 +1,7 @@
 import * as assert from "node:assert/strict";
 import { test } from "node:test";
 
-import type { CreateOpenAiResponseOptions, GenerateTextResult } from "../../../lib/ai";
+import type { CreateOpenAiResponseOptions, GenerateTextResult } from "../../../lib/ai.ts";
 import {
   AGENT_PROMPT_VERSION,
   AgentError,
@@ -11,7 +11,7 @@ import {
   decideDraftRevision,
   generateDraft,
   orchestrateDraft,
-} from "../../../lib/agents/index";
+} from "../../../lib/agents/index.ts";
 
 interface MockCall {
   input: CreateOpenAiResponseOptions["input"];
@@ -115,6 +115,8 @@ test("orchestrateDraft generates a first draft in one bounded step", async () =>
   assert.equal(mock.calls[0]?.metadata?.agent_operation, "create");
   assert.equal(mock.calls[0]?.metadata?.agent_prompt_version, AGENT_PROMPT_VERSION);
   assert.equal(mock.calls[0]?.metadata?.feature, "F005");
+  assert.match(mock.calls[0]?.instructions ?? "", /Supported actions only: clarify the draft request, generate the first active draft, or revise the current active draft/i);
+  assert.match(mock.calls[0]?.instructions ?? "", /Never publish, schedule, browse, scrape, import third-party content, or call unsupported third-party tools/i);
   assert.match(mock.calls[0]?.instructions ?? "", /one active draft per thread/i);
   assert.match(readStringInput(mock.calls[0]?.input ?? ""), /Voice context:/);
   assert.match(readStringInput(mock.calls[0]?.input ?? ""), /Name: Product Lead/);
@@ -221,6 +223,10 @@ test("orchestrateDraft revises the existing draft after a revision decision", as
 
   assert.equal(mock.calls.length, 2);
   assert.equal(mock.calls[0]?.metadata?.agent_phase, "revision-decision");
+  assert.match(
+    mock.calls[0]?.instructions ?? "",
+    /Unsupported requests such as publishing, scheduling, browsing, scraping, or third-party tool use are outside the product workflow/i,
+  );
   assert.equal(mock.calls[1]?.metadata?.agent_phase, "generation");
   assert.equal(mock.calls[1]?.metadata?.agent_operation, "revise");
   assert.match(readStringInput(mock.calls[1]?.input ?? ""), /Current draft:/);
@@ -283,6 +289,73 @@ test("orchestrateDraft preserves the current draft when no revision is requested
   });
 
   assert.equal(mock.calls.length, 1);
+});
+
+test("orchestrateDraft rejects assistant-triggered continuation loops", async () => {
+  const mock = createGenerateTextMock([]);
+
+  await assert.rejects(
+    () =>
+      orchestrateDraft(
+        {
+          messages: [
+            {
+              content: "Write a concise post about product boundaries.",
+              role: "user",
+            },
+            {
+              content: "Here is a first draft.",
+              role: "assistant",
+            },
+          ],
+        },
+        {
+          generateText: mock.generateText,
+        },
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof AgentError);
+      assert.equal(error.code, "invalid-input");
+      assert.match(error.message, /latest workflow turn to be a user message/i);
+      return true;
+    },
+  );
+
+  assert.equal(mock.calls.length, 0);
+});
+
+test("generateDraft rejects non-workflow message roles", async () => {
+  const mock = createGenerateTextMock([]);
+
+  await assert.rejects(
+    () =>
+      generateDraft(
+        {
+          messages: [
+            {
+              content: "Stay inside the drafting workflow.",
+              role: "developer",
+            },
+            {
+              content: "Write a short post about bounded agents.",
+              role: "user",
+            },
+          ],
+        },
+        "create",
+        {
+          generateText: mock.generateText,
+        },
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof AgentError);
+      assert.equal(error.code, "invalid-input");
+      assert.match(error.message, /roles 'user' or 'assistant'/i);
+      return true;
+    },
+  );
+
+  assert.equal(mock.calls.length, 0);
 });
 
 test("decideDraftRevision rejects invalid structured outputs", async () => {
