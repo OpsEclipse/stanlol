@@ -16,5 +16,6 @@
 ✓ Feature #F007 Create request validation helper — done
 ✓ Feature #F006 Create JSON response helper — done
 ✓ Feature #F020 Create analytics event taxonomy — done
+✓ Feature #F008 Create authenticated API helper — done
 ✓ Feature #F016 Create storage asset URL utility — done
 Blocked Feature #F017 Create local-only feature flag helper — implementation added in `lib/local-feature-flags.ts`, but test execution is blocked by pre-existing TypeScript ESM module-resolution failures outside the allowed files when running the `.ts` test suite.

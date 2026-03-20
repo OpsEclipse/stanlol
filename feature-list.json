@@ -53,7 +53,7 @@
       "id": "F008",
       "name": "Create authenticated API helper",
       "description": "Add a shared auth guard for API routes that require a signed-in user.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F003", "F006"]
     },
     {
