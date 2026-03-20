@@ -249,7 +249,7 @@
       "id": "F036",
       "name": "Add session refresh handling",
       "description": "Keep the authenticated workspace usable across normal session refresh behavior.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F026"]
     },
     {

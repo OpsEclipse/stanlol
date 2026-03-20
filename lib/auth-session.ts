@@ -18,6 +18,12 @@ export interface AuthSessionPayload {
   refreshToken: string | null;
 }
 
+export interface StoredAuthSession {
+  accessToken: string | null;
+  expiresAt: string | null;
+  refreshToken: string | null;
+}
+
 export function readRequiredEnv(name: string): string {
   const value = process.env[name]?.trim();
 
@@ -82,6 +88,79 @@ export function clearCookie(response: NextResponse, name: string, secure: boolea
     secure,
     value: "",
   });
+}
+
+function readCookieMap(cookieHeader: string | null): Map<string, string> {
+  const cookies = new Map<string, string>();
+
+  if (!cookieHeader) {
+    return cookies;
+  }
+
+  for (const part of cookieHeader.split(/;\s*/)) {
+    if (!part) {
+      continue;
+    }
+
+    const separatorIndex = part.indexOf("=");
+
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const name = decodeURIComponent(part.slice(0, separatorIndex).trim());
+    const value = decodeURIComponent(part.slice(separatorIndex + 1).trim());
+
+    if (name) {
+      cookies.set(name, value);
+    }
+  }
+
+  return cookies;
+}
+
+export function readAuthSession(request: Request): StoredAuthSession {
+  const cookies = readCookieMap(request.headers.get("cookie"));
+  const accessToken = cookies.get(ACCESS_TOKEN_COOKIE)?.trim() ?? "";
+  const refreshToken = cookies.get(REFRESH_TOKEN_COOKIE)?.trim() ?? "";
+  const expiresAt = cookies.get(ACCESS_TOKEN_EXPIRES_AT_COOKIE)?.trim() ?? "";
+
+  return {
+    accessToken: accessToken || null,
+    expiresAt: expiresAt || null,
+    refreshToken: refreshToken || null,
+  };
+}
+
+export function shouldRefreshAuthSession(
+  session: StoredAuthSession,
+  options: {
+    now?: number;
+    refreshWindowMs?: number;
+  } = {},
+): boolean {
+  if (!session.refreshToken) {
+    return false;
+  }
+
+  if (!session.accessToken) {
+    return true;
+  }
+
+  if (!session.expiresAt) {
+    return false;
+  }
+
+  const expiresAtMs = Date.parse(session.expiresAt);
+
+  if (Number.isNaN(expiresAtMs)) {
+    return true;
+  }
+
+  const now = options.now ?? Date.now();
+  const refreshWindowMs = options.refreshWindowMs ?? 60_000;
+
+  return expiresAtMs <= now + refreshWindowMs;
 }
 
 export function normalizeSessionPayload(payload: unknown): AuthSessionPayload {
@@ -171,17 +250,40 @@ export async function fetchAuthenticatedUser(
   return normalizeAuthenticatedUser(response);
 }
 
-export async function applyAuthSession(
+export async function refreshAuthSession(
+  refreshToken: string,
+  fetchImplementation: typeof fetch = fetch,
+): Promise<AuthSessionPayload> {
+  const normalizedRefreshToken = refreshToken.trim();
+
+  if (!normalizedRefreshToken) {
+    throw new Error("A refresh token is required to refresh the auth session.");
+  }
+
+  const response = await fetchSupabaseAuth(
+    new URL("/auth/v1/token?grant_type=refresh_token", buildSupabaseAuthUrl("/")),
+    {
+      body: JSON.stringify({
+        refresh_token: normalizedRefreshToken,
+      }),
+      headers: {
+        apikey: readRequiredEnv(SUPABASE_ANON_KEY),
+        "content-type": "application/json",
+      },
+      method: "POST",
+    },
+    fetchImplementation,
+  );
+
+  return normalizeSessionPayload(response);
+}
+
+export function writeAuthSessionCookies(
   response: NextResponse,
   request: Request,
   session: AuthSessionPayload,
-  fetchImplementation: typeof fetch = fetch,
-): Promise<AuthenticatedUserProfile> {
+): void {
   const secure = isSecureOrigin(getRequestOrigin(request));
-  const user = await fetchAuthenticatedUser(session.accessToken, fetchImplementation);
-  const userDb = getUserDb(session.accessToken);
-
-  await syncCurrentUserProfile(userDb, user);
 
   setCookie(response, ACCESS_TOKEN_COOKIE, session.accessToken, {
     expires: session.expiresAt ? new Date(session.expiresAt) : undefined,
@@ -199,6 +301,27 @@ export async function applyAuthSession(
       secure,
     });
   }
+}
+
+export function clearAuthSessionCookies(response: NextResponse, request: Request): void {
+  const secure = isSecureOrigin(getRequestOrigin(request));
+
+  clearCookie(response, ACCESS_TOKEN_COOKIE, secure);
+  clearCookie(response, REFRESH_TOKEN_COOKIE, secure);
+  clearCookie(response, ACCESS_TOKEN_EXPIRES_AT_COOKIE, secure);
+}
+
+export async function applyAuthSession(
+  response: NextResponse,
+  request: Request,
+  session: AuthSessionPayload,
+  fetchImplementation: typeof fetch = fetch,
+): Promise<AuthenticatedUserProfile> {
+  const user = await fetchAuthenticatedUser(session.accessToken, fetchImplementation);
+  const userDb = getUserDb(session.accessToken);
+
+  await syncCurrentUserProfile(userDb, user);
+  writeAuthSessionCookies(response, request, session);
 
   return user;
 }

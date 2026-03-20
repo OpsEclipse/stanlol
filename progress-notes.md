@@ -68,3 +68,4 @@ Blocked Feature #F092 Create draft revisions migration — implementation added 
 ✓ Feature #F143 Add voice ownership enforcement — done
 ✓ Feature #F063 Add thread ownership enforcement — done
 ✓ Feature #F210 Implement GET /api/voices route — done
+✓ Feature #F036 Add session refresh handling — done
