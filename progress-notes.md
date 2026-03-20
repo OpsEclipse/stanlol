@@ -89,3 +89,6 @@ Blocked Feature #F177 Persist imported sample rows — added `lib/voice-samples.
 ✓ Feature #F127 Avoid premature draft generation — done
 ✓ Feature #F041 Create full-height workspace frame — done
 ✓ Feature #F042 Create minimal left sidebar layout — done
+✓ Feature #F043 Create center chat panel layout — done
+✓ Feature #F044 Create hidden draft panel region — done
+✓ Feature #F046 Add responsive narrow-screen workspace behavior — done

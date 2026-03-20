@@ -298,14 +298,14 @@
       "id": "F043",
       "name": "Create center chat panel layout",
       "description": "Build the main working surface for conversation and composition.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F041"]
     },
     {
       "id": "F044",
       "name": "Create hidden draft panel region",
       "description": "Define the right-side draft panel container that starts hidden before a draft exists.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F041"]
     },
     {
@@ -319,7 +319,7 @@
       "id": "F046",
       "name": "Add responsive narrow-screen workspace behavior",
       "description": "Preserve the product's core workflow on smaller screens without cluttering the layout.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F041"]
     },
     {
