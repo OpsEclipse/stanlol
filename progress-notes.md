@@ -86,3 +86,4 @@ Blocked Feature #F177 Persist imported sample rows — added `lib/voice-samples.
 ✓ Feature #F028 Add authenticated workspace redirect — done
 ✓ Feature #F029 Add sign-out control — done
 ✓ Feature #F025 Add magic link sign-in screen — done
+✓ Feature #F127 Avoid premature draft generation — done

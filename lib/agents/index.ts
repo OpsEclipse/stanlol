@@ -3,10 +3,11 @@ import type { DbRow, SupabaseDbClient } from "../db.ts";
 
 export const AGENT_PROMPT_VERSION = "draft-orchestration-v1";
 export const CONVERSATION_CONTEXT_PROMPT_VERSION = "conversation-context-prompt-v1";
-export const DRAFT_READINESS_VERSION = "draft-readiness-v2";
+export const DRAFT_READINESS_VERSION = "draft-readiness-v3";
 export const MAX_AGENT_STEPS = 2;
 export const MAX_GENERATION_STEPS = 1;
 export const REVISION_DECISION_OUTPUT_VERSION = "revision-decision-v1";
+export const MIN_SINGLE_TURN_READY_USER_WORDS = 18;
 export const MIN_MULTI_TURN_READY_USER_WORDS = 18;
 export const CHAT_MESSAGE_TABLE = "chat_messages";
 
@@ -634,7 +635,16 @@ export function classifyDraftConversationState(
   }
 
   if (summary.userMessageCount === 1) {
-    return createDraftReadinessEvaluation("ready", "explicit-request-with-brief");
+    if (
+      summary.hasSupportingDetail ||
+      summary.userWordCount >= MIN_SINGLE_TURN_READY_USER_WORDS
+    ) {
+      return createDraftReadinessEvaluation("ready", "explicit-request-with-brief");
+    }
+
+    return createDraftReadinessEvaluation("needs-more-signal", "missing-supporting-detail", [
+      "supporting-detail",
+    ]);
   }
 
   if (
