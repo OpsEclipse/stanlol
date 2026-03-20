@@ -15,3 +15,4 @@
 ✓ Feature #F003 Create Supabase database wrapper — done
 ✓ Feature #F007 Create request validation helper — done
 ✓ Feature #F006 Create JSON response helper — done
+✓ Feature #F020 Create analytics event taxonomy — done

@@ -4,7 +4,7 @@
       "id": "F001",
       "name": "Create environment configuration module",
       "description": "Add a single source of truth for required runtime environment variables and feature flags.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
@@ -32,7 +32,7 @@
       "id": "F005",
       "name": "Create agent orchestration module",
       "description": "Add `lib/agents/` orchestration for draft generation and revision decisions.",
-      "status": "in-progress",
+      "status": "pending",
       "dependencies": ["F002", "F004"]
     },
     {
@@ -53,14 +53,14 @@
       "id": "F008",
       "name": "Create authenticated API helper",
       "description": "Add a shared auth guard for API routes that require a signed-in user.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F006"]
     },
     {
       "id": "F009",
       "name": "Create app error boundary",
       "description": "Add a top-level error boundary for graceful handling of unexpected UI failures.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F002"]
     },
     {
