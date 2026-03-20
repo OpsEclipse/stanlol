@@ -67,7 +67,7 @@
       "id": "F010",
       "name": "Create loading state primitives",
       "description": "Define consistent loading components for auth, chat, drafts, uploads, and settings.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F002"]
     },
     {

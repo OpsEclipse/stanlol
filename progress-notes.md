@@ -22,6 +22,7 @@
 ✓ Feature #F016 Create storage asset URL utility — done
 Blocked Feature #F017 Create local-only feature flag helper — implementation added in `lib/local-feature-flags.ts`, but test execution is blocked by pre-existing TypeScript ESM module-resolution failures outside the allowed files when running the `.ts` test suite.
 ✓ Feature #F017 Create local-only feature flag helper — done
+✓ Feature #F010 Create loading state primitives — done
 ✓ Feature #F012 Create toast and feedback system — done
 ✓ Feature #F011 Create empty state primitives — done
 ✓ Feature #F037 Add unauthorized API response behavior — done
