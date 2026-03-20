@@ -33,3 +33,4 @@ Blocked Feature #F017 Create local-only feature flag helper — implementation a
 ✓ Feature #F130 Prevent arbitrary long-running agent loops — done
 Paused orchestration — only ready features are migration-backed (`F018`, `F021`), and the current repo rules treat migration-file work as a hard stop.
 ✓ Feature #F021 Create user profiles migration — done
+✓ Feature #F018 Create generation audit event table — done

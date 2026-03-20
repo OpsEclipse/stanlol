@@ -123,7 +123,7 @@
       "id": "F018",
       "name": "Create generation audit event table",
       "description": "Persist generation audit records for debugging and product insight.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F003"]
     },
     {
