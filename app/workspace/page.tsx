@@ -1,4 +1,9 @@
 import { cookies } from "next/headers";
+import {
+  AccountSettingsPanel,
+  AccountSettingsSection,
+  SettingsPanelItem,
+} from "../../components/account-settings-panel.js";
 import { SidebarProfileSummary } from "../../components/sidebar-profile-summary.js";
 import {
   ThreadHistoryList,
@@ -7,6 +12,7 @@ import {
 import { getCurrentUserProfile, getUserDb } from "../../lib/db.js";
 
 const ACCESS_TOKEN_COOKIE_NAME = "stanlol-access-token";
+const SIGN_OUT_PATH = "/auth/sign-out";
 
 interface SidebarIdentity {
   displayName: string | null;
@@ -195,20 +201,69 @@ export default async function WorkspacePage() {
             <ThreadHistoryList threads={WORKSPACE_THREAD_HISTORY} />
           </div>
         </aside>
-        <section className="flex min-h-[28rem] flex-1 items-center justify-center rounded-[2rem] border border-white/10 bg-white/8 p-8 shadow-2xl shadow-black/40 backdrop-blur">
-          <div className="max-w-3xl">
-            <span className="inline-flex rounded-full border border-emerald-300/20 bg-emerald-200/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-emerald-100">
-              Workspace ready
-            </span>
-            <h2 className="mt-6 text-4xl font-semibold tracking-tight text-white md:text-5xl">
-              Auth completed. Stanlol can hand off to the workspace.
-            </h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-stone-300 md:text-lg">
-              The authenticated landing route is now available at <code>/workspace</code> so OAuth
-              and magic link completion can move users into the product shell without a dead-end
-              redirect.
-            </p>
+        <section className="flex min-h-[28rem] flex-1 flex-col gap-4">
+          <div className="rounded-[2rem] border border-white/10 bg-white/8 p-8 shadow-2xl shadow-black/40 backdrop-blur">
+            <div className="max-w-3xl">
+              <span className="inline-flex rounded-full border border-emerald-300/20 bg-emerald-200/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-emerald-100">
+                Workspace ready
+              </span>
+              <h2 className="mt-6 text-4xl font-semibold tracking-tight text-white md:text-5xl">
+                Auth completed. Stanlol can hand off to the workspace.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-stone-300 md:text-lg">
+                The authenticated landing route is now available at <code>/workspace</code> so
+                OAuth and magic link completion can move users into the product shell without a
+                dead-end redirect.
+              </p>
+            </div>
           </div>
+          <AccountSettingsPanel>
+            <AccountSettingsSection
+              description="This settings surface keeps the current account state nearby while more detailed profile controls land in follow-up tasks."
+              eyebrow="Account"
+              title="Profile and access"
+            >
+              <SettingsPanelItem
+                description="The current workspace session is authenticated and ready for account-specific preferences."
+                label="Sign-in status"
+                status="Active"
+                value="Authenticated workspace access"
+              />
+              <SettingsPanelItem
+                description="Email visibility and editable display-name controls are staged on top of this base panel."
+                label="Profile controls"
+                value="Account preferences coming next"
+              />
+            </AccountSettingsSection>
+            <AccountSettingsSection
+              description="Workspace controls stay lightweight so the main shell can surface just the essentials without introducing heavy navigation."
+              eyebrow="Workspace"
+              title="Environment and controls"
+            >
+              <SettingsPanelItem
+                description="This area is reserved for low-friction workspace actions tied to the signed-in account."
+                label="Workspace scope"
+                status="Ready"
+                value="Primary writing workspace"
+              />
+              <SettingsPanelItem
+                description="Conversation history and future voice controls can share this settings surface without leaving the workspace shell."
+                label="Saved context"
+                value="History and workspace tools stay close"
+              />
+              <form action={SIGN_OUT_PATH} className="pt-1" method="post">
+                <button
+                  className="inline-flex items-center justify-center rounded-full border border-rose-300/25 bg-rose-200/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:border-rose-200/40 hover:bg-rose-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+                  type="submit"
+                >
+                  Sign out
+                </button>
+                <p className="mt-3 text-sm leading-6 text-stone-300">
+                  End this workspace session and return to the sign-in screen.
+                </p>
+              </form>
+            </AccountSettingsSection>
+          </AccountSettingsPanel>
         </section>
       </div>
     </main>

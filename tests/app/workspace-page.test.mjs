@@ -26,6 +26,7 @@ function compilePageFixture(projectRoot) {
       "--esModuleInterop",
       "--skipLibCheck",
       "app/workspace/page.tsx",
+      "components/account-settings-panel.tsx",
       "components/sidebar-profile-summary.tsx",
       "components/thread-history-list.tsx",
     ],
@@ -65,6 +66,57 @@ export async function getCurrentUserProfile() {
 }
 `,
   );
+
+  return outputDirectory;
+}
+
+function rewriteCompiledImports(filePath, replacements) {
+  const source = readFileSync(filePath, "utf8");
+  let nextSource = source;
+
+  for (const [search, replacement] of replacements) {
+    nextSource = nextSource.replace(search, replacement);
+  }
+
+  writeFileSync(filePath, nextSource);
+}
+
+function compileSignOutRouteFixture(projectRoot) {
+  const outputDirectory = mkdtempSync(resolve(tmpdir(), "stanlol-auth-sign-out-route-"));
+
+  execFileSync(
+    "npx",
+    [
+      "tsc",
+      "--outDir",
+      outputDirectory,
+      "--module",
+      "esnext",
+      "--moduleResolution",
+      "bundler",
+      "--target",
+      "es2022",
+      "--esModuleInterop",
+      "--skipLibCheck",
+      "app/auth/sign-out/route.ts",
+      "lib/db.ts",
+    ],
+    {
+      cwd: projectRoot,
+      stdio: "pipe",
+    },
+  );
+
+  symlinkSync(resolve(projectRoot, "node_modules"), resolve(outputDirectory, "node_modules"), "dir");
+
+  rewriteCompiledImports(resolve(outputDirectory, "app/auth/sign-out/route.js"), [
+    ['from "next/server";', 'from "next/server.js";'],
+    ['from "../../../lib/auth-session";', 'from "../../../lib/auth-session.js";'],
+  ]);
+  rewriteCompiledImports(resolve(outputDirectory, "lib/auth-session.js"), [
+    ['from "next/server";', 'from "next/server.js";'],
+    ['from "./db";', 'from "./db.js";'],
+  ]);
 
   return outputDirectory;
 }
@@ -135,6 +187,15 @@ function findElementsByType(value, type, matches = []) {
   return findElementsByType(value.props.children, type, matches);
 }
 
+function getSetCookies(response) {
+  if (typeof response.headers.getSetCookie === "function") {
+    return response.headers.getSetCookie();
+  }
+
+  const setCookie = response.headers.get("set-cookie");
+  return setCookie ? [setCookie] : [];
+}
+
 test("workspace page shows thread activity times in the sidebar history list", async (t) => {
   const projectRoot = process.cwd();
   const outputDirectory = compilePageFixture(projectRoot);
@@ -163,6 +224,7 @@ test("workspace page shows thread activity times in the sidebar history list", a
   const pageModule = await import(pathToFileURL(pageModulePath).href);
   const view = resolveElementTree(await pageModule.default());
   const text = collectText(view).join(" ");
+  const forms = findElementsByType(view, "form");
   const timeElements = findElementsByType(view, "time");
 
   assert.match(text, /Account/);
@@ -171,10 +233,53 @@ test("workspace page shows thread activity times in the sidebar history list", a
   assert.match(text, /Conversation history/);
   assert.match(text, /Recent activity/);
   assert.match(text, /Launch announcement angle/);
+  assert.match(text, /Account settings/);
+  assert.match(text, /Profile and access/);
+  assert.match(text, /Environment and controls/);
+  assert.match(text, /Authenticated workspace access/);
+  assert.match(text, /Sign out/);
+  assert.match(text, /End this workspace session and return to the sign-in screen\./);
+  assert.equal(
+    forms.some((form) => form.props.action === "/auth/sign-out" && form.props.method === "post"),
+    true,
+  );
   assert.equal(timeElements.length, 3);
   for (const timeElement of timeElements) {
     assert.equal(typeof timeElement.props.dateTime, "string");
     assert.equal(String(timeElement.props.dateTime).length > 0, true);
     assert.equal(collectText(timeElement).join("").trim().length > 0, true);
   }
+});
+
+test("POST /auth/sign-out clears auth cookies and redirects to the sign-in screen", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compileSignOutRouteFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+  });
+
+  const routeModulePath = resolve(outputDirectory, "app/auth/sign-out/route.js");
+
+  assert.equal(existsSync(routeModulePath), true);
+
+  const routeModule = await import(pathToFileURL(routeModulePath).href);
+  const {
+    ACCESS_TOKEN_COOKIE,
+    ACCESS_TOKEN_EXPIRES_AT_COOKIE,
+    POST,
+    REFRESH_TOKEN_COOKIE,
+    SIGN_OUT_PATH,
+  } = routeModule;
+
+  const response = await POST(new Request(`https://stanlol.test${SIGN_OUT_PATH}`, { method: "POST" }));
+  const location = response.headers.get("location");
+  const setCookies = getSetCookies(response);
+
+  assert.equal(response.status, 303);
+  assert.equal(location, "https://stanlol.test/");
+  assert.ok(setCookies.some((cookie) => cookie.startsWith(`${ACCESS_TOKEN_COOKIE}=`)));
+  assert.ok(setCookies.some((cookie) => cookie.startsWith(`${REFRESH_TOKEN_COOKIE}=`)));
+  assert.ok(setCookies.some((cookie) => cookie.startsWith(`${ACCESS_TOKEN_EXPIRES_AT_COOKIE}=`)));
+  assert.ok(setCookies.every((cookie) => /Expires=Thu, 01 Jan 1970 00:00:00 GMT/.test(cookie)));
 });
