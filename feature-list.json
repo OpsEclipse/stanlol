@@ -886,7 +886,7 @@
       "id": "F127",
       "name": "Avoid premature draft generation",
       "description": "Tune the assistant to avoid creating drafts too early on low-signal threads.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F126"]
     },
     {

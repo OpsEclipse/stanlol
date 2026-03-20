@@ -12,6 +12,7 @@ import {
   MAX_AGENT_STEPS,
   MAX_GENERATION_STEPS,
   MIN_MULTI_TURN_READY_USER_WORDS,
+  MIN_SINGLE_TURN_READY_USER_WORDS,
   REVISION_DECISION_OUTPUT_VERSION,
   buildConversationContextPrompt,
   classifyDraftConversationState,
@@ -99,7 +100,8 @@ test("evaluateDraftReadiness marks an explicit first-draft request with topic de
   const result = evaluateDraftReadiness({
     messages: [
       {
-        content: "Write a LinkedIn post about shipping our internal orchestration layer.",
+        content:
+          "Write a LinkedIn post about how we cut onboarding from 14 days to 3, why the ops team trusted it faster, and what changed in our rollout.",
         role: "user",
       },
     ],
@@ -110,6 +112,25 @@ test("evaluateDraftReadiness marks an explicit first-draft request with topic de
     reason: "explicit-request-with-brief",
     state: "ready-to-draft",
     status: "ready",
+    version: DRAFT_READINESS_VERSION,
+  });
+});
+
+test("evaluateDraftReadiness keeps a short single-turn draft ask exploratory until the brief is concrete", () => {
+  const result = evaluateDraftReadiness({
+    messages: [
+      {
+        content: "Write a LinkedIn post about our onboarding launch.",
+        role: "user",
+      },
+    ],
+  });
+
+  assert.deepEqual(result, {
+    missingSignals: ["supporting-detail"],
+    reason: "missing-supporting-detail",
+    state: "exploratory",
+    status: "needs-more-signal",
     version: DRAFT_READINESS_VERSION,
   });
 });
@@ -206,7 +227,8 @@ test("orchestrateDraft generates a first draft in one bounded step", async () =>
       },
       messages: [
         {
-          content: "Write a LinkedIn post about shipping our internal orchestration layer.",
+          content:
+            "Write a LinkedIn post about how we replaced manual routing with an orchestration layer, why it reduced handoff confusion, and what the team learned shipping it.",
           role: "user",
         },
       ],
@@ -274,7 +296,8 @@ test("generateDraft returns explicit termination metadata for a single-step crea
     {
       messages: [
         {
-          content: "Write a LinkedIn post about making agent termination explicit.",
+          content:
+            "Write a LinkedIn post about making agent termination explicit, why it reduced rework in our draft loop, and how the team can audit each generation step.",
           role: "user",
         },
       ],
@@ -311,7 +334,7 @@ test("generateDraft rejects a first-draft request before the thread is ready", a
               role: "user",
             },
             {
-              content: `Need at least ${MIN_MULTI_TURN_READY_USER_WORDS - 5} words of real brief before drafting.`,
+              content: `Need at least ${Math.max(MIN_SINGLE_TURN_READY_USER_WORDS, MIN_MULTI_TURN_READY_USER_WORDS) - 5} words of real brief before drafting.`,
               role: "assistant",
             },
             {
