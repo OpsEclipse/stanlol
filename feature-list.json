@@ -123,7 +123,7 @@
       "id": "F018",
       "name": "Create generation audit event table",
       "description": "Persist generation audit records for debugging and product insight.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F003"]
     },
     {
@@ -263,7 +263,7 @@
       "id": "F038",
       "name": "Add local test-account seeding lookup",
       "description": "Provide a development-only path to identify the seeded local test user.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F017", "F021"]
     },
     {
@@ -424,7 +424,7 @@
       "id": "F061",
       "name": "Create chat threads migration",
       "description": "Add the persistent table for user-owned chat threads.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F021"]
     },
     {
@@ -445,7 +445,7 @@
       "id": "F064",
       "name": "Create thread creation service",
       "description": "Add a shared service for creating a new empty chat thread.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F061"]
     },
     {
@@ -935,7 +935,7 @@
       "id": "F134",
       "name": "Log generation success audit events",
       "description": "Record successful generation outcomes for later debugging and analysis.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F019", "F133"]
     },
     {

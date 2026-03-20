@@ -1,6 +1,12 @@
 import * as assert from "node:assert/strict";
 import { test } from "node:test";
 
+import type {
+  DbMutationOptions,
+  DbMutationPayload,
+  DbRow,
+  SupabaseDbClient,
+} from "../../../lib/db.ts";
 import {
   GENERATION_RESULT_VERSION,
   createFailedGenerationResult,
@@ -9,6 +15,7 @@ import {
   getAssistantOutputText,
   hasAssistantOutput,
   isFailedGenerationResult,
+  logSuccessfulGenerationResult,
 } from "../../../lib/agents/generation-result.ts";
 
 test("createGeneratedGenerationResult returns a stable generated contract", () => {
@@ -112,5 +119,119 @@ test("generation result helpers reject empty required text", () => {
         operation: "create",
       }),
     /Generation error message cannot be empty/,
+  );
+});
+
+test("logSuccessfulGenerationResult writes a success audit event from the structured result contract", async () => {
+  const result = createGeneratedGenerationResult({
+    model: "gpt-5",
+    operation: "create",
+    outputText: "A tighter launch update for LinkedIn.",
+    promptVersion: "draft-orchestration-v1",
+    responseId: "resp_123",
+  });
+  let insertCall: {
+    options?: DbMutationOptions;
+    table: string;
+    values: DbMutationPayload;
+  } | null = null;
+  const insert: SupabaseDbClient["insert"] = async <T extends DbRow = DbRow>(
+    table: string,
+    values: DbMutationPayload | readonly DbMutationPayload[],
+    options?: DbMutationOptions,
+  ): Promise<T[]> => {
+    if (Array.isArray(values)) {
+      throw new Error("Expected a single generation audit insert payload.");
+    }
+
+    const normalizedValues = values as DbMutationPayload;
+
+    insertCall = {
+      options,
+      table,
+      values: normalizedValues,
+    };
+
+    return [
+      {
+        created_at: "2026-03-19T20:00:00.000Z",
+        id: "audit-1",
+        ...normalizedValues,
+      },
+    ] as unknown as T[];
+  };
+
+  const row = await logSuccessfulGenerationResult(
+    {
+      insert,
+    } as never,
+    result,
+    {
+      draftId: " draft-123 ",
+      threadId: " thread-123 ",
+      userId: " user-123 ",
+      voiceId: " voice-123 ",
+    },
+  );
+
+  assert.equal(row.outcome, "success");
+  assert.deepEqual(insertCall, {
+    options: {
+      columns: [
+        "id",
+        "user_id",
+        "thread_id",
+        "draft_id",
+        "voice_id",
+        "outcome",
+        "revision_reason",
+        "model_identifier",
+        "generation_latency_ms",
+        "error_message",
+        "metadata",
+        "created_at",
+      ],
+    },
+    table: "generation_audit_events",
+    values: {
+      draft_id: "draft-123",
+      error_message: null,
+      generation_latency_ms: null,
+      metadata: {
+        assistantRole: "assistant",
+        assistantTextLength: result.assistant.text.length,
+        promptVersion: "draft-orchestration-v1",
+        responseId: "resp_123",
+        resultStatus: "generated",
+        resultVersion: GENERATION_RESULT_VERSION,
+      },
+      model_identifier: null,
+      outcome: "success",
+      revision_reason: null,
+      thread_id: "thread-123",
+      user_id: "user-123",
+      voice_id: "voice-123",
+    },
+  });
+});
+
+test("logSuccessfulGenerationResult rejects failed generation results", async () => {
+  const failedResult = createFailedGenerationResult({
+    message: "OpenAI timed out",
+    operation: "revise",
+  });
+
+  await assert.rejects(
+    () =>
+      logSuccessfulGenerationResult(
+        {
+          insert: async () => [],
+        } as never,
+        failedResult,
+        {
+          userId: "user-123",
+        },
+      ),
+    /Successful generation audit events require a non-failed generation result/,
   );
 });
