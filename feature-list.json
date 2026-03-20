@@ -67,21 +67,21 @@
       "id": "F010",
       "name": "Create loading state primitives",
       "description": "Define consistent loading components for auth, chat, drafts, uploads, and settings.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F002"]
     },
     {
       "id": "F011",
       "name": "Create empty state primitives",
       "description": "Define reusable empty states for threads, voices, drafts, and imports.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F002"]
     },
     {
       "id": "F012",
       "name": "Create toast and feedback system",
       "description": "Add lightweight user feedback for copy, save, upload, and import outcomes.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F002"]
     },
     {
@@ -256,7 +256,7 @@
       "id": "F037",
       "name": "Add unauthorized API response behavior",
       "description": "Return consistent unauthenticated and unauthorized JSON errors from protected routes.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F008"]
     },
     {
@@ -865,7 +865,7 @@
       "id": "F124",
       "name": "Build system prompt from product boundaries",
       "description": "Encode v1 product constraints and desired assistant behavior in the generation system prompt.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F005"]
     },
     {
