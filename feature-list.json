@@ -172,7 +172,7 @@
       "id": "F025",
       "name": "Add magic link sign-in screen",
       "description": "Provide an email magic link sign-in path for authenticated workspace access.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F021"]
     },
     {
@@ -200,7 +200,7 @@
       "id": "F029",
       "name": "Add sign-out control",
       "description": "Let authenticated users end their session from the product UI.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F026"]
     },
     {
@@ -214,7 +214,7 @@
       "id": "F031",
       "name": "Add basic account settings panel",
       "description": "Provide a lightweight settings surface for account and workspace controls.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F030"]
     },
     {
@@ -879,7 +879,7 @@
       "id": "F126",
       "name": "Classify exploratory versus ready-to-draft state",
       "description": "Distinguish early exploratory chat from threads that are ready for draft output.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F096", "F121", "F124", "F125"]
     },
     {
@@ -1607,7 +1607,7 @@
       "id": "F230",
       "name": "Add auth guard tests",
       "description": "Verify protected UI and API flows reject unauthenticated access correctly.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F027", "F037"]
     },
     {

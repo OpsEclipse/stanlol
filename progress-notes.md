@@ -80,4 +80,9 @@ Blocked Feature #F177 Persist imported sample rows — added `lib/voice-samples.
 ✓ Feature #F125 Build conversation context prompt — done
 ✓ Feature #F035 Add auth error messaging — done
 ✓ Feature #F027 Add signed-out route protection — done
+✓ Feature #F031 Add basic account settings panel — done
+✓ Feature #F230 Add auth guard tests — done
+✓ Feature #F126 Classify exploratory versus ready-to-draft state — done
 ✓ Feature #F028 Add authenticated workspace redirect — done
+✓ Feature #F029 Add sign-out control — done
+✓ Feature #F025 Add magic link sign-in screen — done
