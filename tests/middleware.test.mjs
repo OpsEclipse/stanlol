@@ -123,6 +123,33 @@ async function withMockedFetch(fetchImplementation, run) {
   }
 }
 
+test("middleware redirects anonymous workspace requests to the sign-in screen", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compileMiddlewareFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+  });
+
+  const middlewareModule = await import(pathToFileURL(resolve(outputDirectory, "middleware.js")).href);
+  let wasCalled = false;
+
+  await withAuthEnv(async () => {
+    await withMockedFetch(async () => {
+      wasCalled = true;
+      return createJsonResponse({}, { status: 500 });
+    }, async () => {
+      const response = await middlewareModule.middleware(
+        new Request("https://stanlol.test/workspace"),
+      );
+
+      assert.equal(wasCalled, false);
+      assert.equal(response.headers.get("location"), "https://stanlol.test/");
+      assert.deepEqual(getSetCookies(response), []);
+    });
+  });
+});
+
 test("middleware refreshes the workspace session when only a refresh token remains", async (t) => {
   const projectRoot = process.cwd();
   const outputDirectory = compileMiddlewareFixture(projectRoot);
@@ -232,6 +259,7 @@ test("middleware clears auth cookies when refresh fails", async (t) => {
         );
         const setCookies = getSetCookies(response);
 
+        assert.equal(response.headers.get("location"), "https://stanlol.test/");
         assert.ok(setCookies.some((cookie) => cookie.startsWith("stanlol-access-token=")));
         assert.ok(setCookies.some((cookie) => cookie.startsWith("stanlol-refresh-token=")));
         assert.ok(setCookies.some((cookie) => cookie.startsWith("stanlol-access-token-expires-at=")));

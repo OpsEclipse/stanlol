@@ -68,6 +68,14 @@ Blocked Feature #F092 Create draft revisions migration — implementation added 
 ✓ Feature #F143 Add voice ownership enforcement — done
 ✓ Feature #F063 Add thread ownership enforcement — done
 ✓ Feature #F210 Implement GET /api/voices route — done
-✓ Feature #F036 Add session refresh handling — done
-✓ Feature #F034 Add auth bootstrap loading state — done
+✓ Feature #F077 Persist assistant message row — done
+✓ Feature #F093 Enforce one active draft per thread — done
+✓ Feature #F191 Create uploaded assets migration — done
+Blocked Feature #F177 Persist imported sample rows — added `lib/voice-samples.ts` with passing targeted coverage in `tests/lib/voice-samples.test.mjs`, but `npm test` still fails after 3 attempts because `tests/lib/draft-fetch.test.mjs` cannot compile `lib/draft-fetch.ts` in the full suite.
+✓ Feature #F121 Load thread context for generation — done
 ✓ Feature #F096 Add readiness evaluation before first draft — done
+✓ Feature #F034 Add auth bootstrap loading state — done
+✓ Feature #F036 Add session refresh handling — done
+✓ Feature #F125 Build conversation context prompt — done
+✓ Feature #F035 Add auth error messaging — done
+✓ Feature #F027 Add signed-out route protection — done

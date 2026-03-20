@@ -186,7 +186,7 @@
       "id": "F027",
       "name": "Add signed-out route protection",
       "description": "Prevent anonymous users from accessing the authenticated workspace.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F022", "F026"]
     },
     {
@@ -207,7 +207,7 @@
       "id": "F030",
       "name": "Add sidebar profile summary",
       "description": "Show the current user's account identity in the quiet left sidebar.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F022", "F026"]
     },
     {
@@ -242,7 +242,7 @@
       "id": "F035",
       "name": "Add auth error messaging",
       "description": "Surface authentication failures without exposing raw provider errors.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F011", "F026"]
     },
     {
@@ -536,7 +536,7 @@
       "id": "F077",
       "name": "Persist assistant message row",
       "description": "Save each assistant response to the thread message history.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F062"]
     },
     {
@@ -648,7 +648,7 @@
       "id": "F093",
       "name": "Enforce one active draft per thread",
       "description": "Make the one-thread-to-one-active-draft product rule explicit in persistence logic.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F091"]
     },
     {
@@ -844,7 +844,7 @@
       "id": "F121",
       "name": "Load thread context for generation",
       "description": "Provide the active thread messages to the assistant generation flow.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F005", "F061", "F062"]
     },
     {
@@ -872,7 +872,7 @@
       "id": "F125",
       "name": "Build conversation context prompt",
       "description": "Assemble the active thread history into a clean prompt input for the assistant.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F121"]
     },
     {
@@ -1236,7 +1236,7 @@
       "id": "F177",
       "name": "Persist imported sample rows",
       "description": "Save parsed manual sample content for a voice profile.",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": ["F142", "F176"]
     },
     {
@@ -1334,7 +1334,7 @@
       "id": "F191",
       "name": "Create uploaded assets migration",
       "description": "Add the persistent table for uploaded images associated with drafts.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F021"]
     },
     {
