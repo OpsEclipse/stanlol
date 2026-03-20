@@ -51,3 +51,4 @@ Paused orchestration — only ready features are migration-backed (`F018`, `F021
 ✓ Feature #F067 Create thread list query — done
 ✓ Feature #F207 Implement GET /api/chat/threads route — done
 ✓ Feature #F220 Implement POST /api/dev/auto-login route — done
+✓ Feature #F085 Show thread timestamp in history — done

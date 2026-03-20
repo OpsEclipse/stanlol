@@ -592,7 +592,7 @@
       "id": "F085",
       "name": "Show thread timestamp in history",
       "description": "Display recent thread activity times in the sidebar history list.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F015", "F067"]
     },
     {
