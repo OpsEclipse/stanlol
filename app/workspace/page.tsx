@@ -1,7 +1,145 @@
+import { cookies } from "next/headers";
+import { SidebarProfileSummary } from "../../components/sidebar-profile-summary.js";
 import {
   ThreadHistoryList,
   type ThreadHistoryItem,
 } from "../../components/thread-history-list.js";
+import { getCurrentUserProfile, getUserDb } from "../../lib/db.js";
+
+const ACCESS_TOKEN_COOKIE_NAME = "stanlol-access-token";
+
+interface SidebarIdentity {
+  displayName: string | null;
+  email: string | null;
+}
+
+function normalizeText(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = value.trim();
+
+  return normalizedValue ? normalizedValue : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function decodeBase64Url(value: string): string | null {
+  const normalizedValue = value.replace(/-/g, "+").replace(/_/g, "/");
+  const remainder = normalizedValue.length % 4;
+  const paddedValue =
+    remainder === 0 ? normalizedValue : `${normalizedValue}${"=".repeat(4 - remainder)}`;
+
+  try {
+    return Buffer.from(paddedValue, "base64").toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
+function parseAccessTokenPayload(accessToken: string): Record<string, unknown> | null {
+  const segments = accessToken.split(".");
+
+  if (segments.length < 2) {
+    return null;
+  }
+
+  const payload = decodeBase64Url(segments[1] ?? "");
+
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(payload) as unknown;
+
+    return isRecord(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function readDisplayNameFromMetadata(metadata: Record<string, unknown> | null): string | null {
+  if (!metadata) {
+    return null;
+  }
+
+  for (const key of ["display_name", "full_name", "name", "user_name"] as const) {
+    const value = normalizeText(metadata[key]);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function deriveSidebarIdentityFromToken(accessToken: string): SidebarIdentity {
+  const payload = parseAccessTokenPayload(accessToken);
+
+  if (!payload) {
+    return {
+      displayName: null,
+      email: null,
+    };
+  }
+
+  const userMetadata = isRecord(payload.user_metadata)
+    ? payload.user_metadata
+    : isRecord(payload.userMetadata)
+      ? payload.userMetadata
+      : null;
+
+  return {
+    displayName:
+      normalizeText(payload.display_name) ??
+      normalizeText(payload.name) ??
+      readDisplayNameFromMetadata(userMetadata),
+    email: normalizeText(payload.email),
+  };
+}
+
+async function loadSidebarIdentity(): Promise<SidebarIdentity> {
+  let accessToken = "";
+
+  try {
+    const cookieStore = await cookies();
+    accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE_NAME)?.value?.trim() ?? "";
+  } catch {
+    return {
+      displayName: null,
+      email: null,
+    };
+  }
+
+  if (!accessToken) {
+    return {
+      displayName: null,
+      email: null,
+    };
+  }
+
+  const fallbackIdentity = deriveSidebarIdentityFromToken(accessToken);
+
+  try {
+    const profile = await getCurrentUserProfile(getUserDb(accessToken));
+
+    if (!profile) {
+      return fallbackIdentity;
+    }
+
+    return {
+      displayName: normalizeText(profile.display_name),
+      email: normalizeText(profile.email),
+    };
+  } catch {
+    return fallbackIdentity;
+  }
+}
 
 function createDemoThreadHistory(): ThreadHistoryItem[] {
   const now = Date.now();
@@ -28,7 +166,9 @@ function createDemoThreadHistory(): ThreadHistoryItem[] {
 
 const WORKSPACE_THREAD_HISTORY = createDemoThreadHistory();
 
-export default function WorkspacePage() {
+export default async function WorkspacePage() {
+  const sidebarIdentity = await loadSidebarIdentity();
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-stone-950 px-4 py-4 text-stone-100 md:px-6 md:py-6">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.22),_transparent_36%),linear-gradient(145deg,_#0c0a09_0%,_#1c1917_48%,_#292524_100%)]" />
@@ -47,6 +187,11 @@ export default function WorkspacePage() {
                 conversation takes less scanning.
               </p>
             </div>
+            <SidebarProfileSummary
+              className="mx-2 mb-4"
+              displayName={sidebarIdentity.displayName}
+              email={sidebarIdentity.email}
+            />
             <ThreadHistoryList threads={WORKSPACE_THREAD_HISTORY} />
           </div>
         </aside>
