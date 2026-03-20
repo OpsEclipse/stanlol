@@ -1,4 +1,4 @@
-import { jsonError } from "./json-response.ts";
+import { jsonError } from "./json-response";
 
 export const DEFAULT_UNAUTHENTICATED_API_MESSAGE = "Authentication required.";
 export const DEFAULT_UNAUTHORIZED_API_MESSAGE =
