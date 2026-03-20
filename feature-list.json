@@ -445,7 +445,7 @@
       "id": "F064",
       "name": "Create thread creation service",
       "description": "Add a shared service for creating a new empty chat thread.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F061"]
     },
     {

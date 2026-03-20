@@ -36,3 +36,4 @@ Paused orchestration — only ready features are migration-backed (`F018`, `F021
 ✓ Feature #F038 Add local test-account seeding lookup — done
 ✓ Feature #F018 Create generation audit event table — done
 ✓ Feature #F061 Create chat threads migration — done
+✓ Feature #F064 Create thread creation service — done
