@@ -907,7 +907,7 @@
       "id": "F130",
       "name": "Prevent arbitrary long-running agent loops",
       "description": "Keep the assistant bounded to the product's controlled drafting workflow.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F129"]
     },
     {

@@ -30,3 +30,4 @@ Blocked Feature #F017 Create local-only feature flag helper — implementation a
 ✓ Feature #F129 Add explicit agent termination conditions — done
 ✓ Feature #F133 Create structured generation result contract — done
 ✓ Feature #F131 Prevent non-product third-party tool calls — done
+✓ Feature #F130 Prevent arbitrary long-running agent loops — done
