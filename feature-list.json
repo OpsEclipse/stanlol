@@ -32,7 +32,7 @@
       "id": "F005",
       "name": "Create agent orchestration module",
       "description": "Add `lib/agents/` orchestration for draft generation and revision decisions.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F002", "F004"]
     },
     {
@@ -53,14 +53,14 @@
       "id": "F008",
       "name": "Create authenticated API helper",
       "description": "Add a shared auth guard for API routes that require a signed-in user.",
-      "status": "done",
+      "status": "in-progress",
       "dependencies": ["F003", "F006"]
     },
     {
       "id": "F009",
       "name": "Create app error boundary",
       "description": "Add a top-level error boundary for graceful handling of unexpected UI failures.",
-      "status": "done",
+      "status": "in-progress",
       "dependencies": ["F002"]
     },
     {
@@ -95,7 +95,7 @@
       "id": "F014",
       "name": "Create external link utility",
       "description": "Add a safe helper for external navigation such as opening LinkedIn.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
@@ -109,14 +109,14 @@
       "id": "F016",
       "name": "Create storage asset URL utility",
       "description": "Add a helper for generating preview URLs for stored uploaded assets.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F001"]
     },
     {
       "id": "F017",
       "name": "Create local-only feature flag helper",
       "description": "Add a single helper for development-only capabilities such as auto-login.",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": ["F001"]
     },
     {
@@ -137,7 +137,7 @@
       "id": "F020",
       "name": "Create analytics event taxonomy",
       "description": "Define a stable set of product analytics events for key workflow milestones.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F002"]
     },
     {
