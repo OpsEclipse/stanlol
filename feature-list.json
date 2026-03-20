@@ -424,7 +424,7 @@
       "id": "F061",
       "name": "Create chat threads migration",
       "description": "Add the persistent table for user-owned chat threads.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F021"]
     },
     {

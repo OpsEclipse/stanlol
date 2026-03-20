@@ -5,7 +5,7 @@ This document records the application database shape.
 ## Current State
 
 - Supabase migrations now live under `supabase/migrations/`.
-- The application currently defines the `public.user_profiles` and `public.generation_audit_events` tables.
+- The application currently defines the `public.user_profiles`, `public.generation_audit_events`, and `public.chat_threads` tables.
 
 ## Tables
 
@@ -60,6 +60,26 @@ This document records the application database shape.
 - Relationships:
   - Each audit event belongs to one `auth.users` record through `user_id`.
   - Thread, draft, and voice identifiers are stored as nullable UUID references until those tables exist.
+
+### `public.chat_threads`
+
+- Purpose: persistent user-owned conversation containers for chat history and draft context.
+- Primary key: `id uuid` with `gen_random_uuid()` default.
+- Columns:
+  - `id uuid`
+  - `user_id uuid`
+  - `title text | null`
+  - `created_at timestamptz`
+  - `updated_at timestamptz`
+- Constraints:
+  - `user_id` references `auth.users(id)` with `on delete cascade`.
+  - `chat_threads_title_not_blank` prevents blank titles when present.
+- Indexes:
+  - `chat_threads_user_id_updated_at_idx` on `user_id, updated_at desc`.
+- Row-level security:
+  - Authenticated users can `select`, `insert`, and `update` only their own rows where `auth.uid() = user_id`.
+- Relationships:
+  - Each chat thread belongs to one `auth.users` record through `user_id`.
 
 ## Documentation Contract
 
