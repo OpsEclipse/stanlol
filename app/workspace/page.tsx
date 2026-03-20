@@ -119,6 +119,9 @@ interface WorkspaceContext {
   voiceProfiles: VoiceProfileRow[];
 }
 
+type WorkspaceSearchParamValue = string | string[] | undefined;
+type WorkspaceSearchParams = Record<string, WorkspaceSearchParamValue>;
+
 async function loadWorkspaceContext(): Promise<WorkspaceContext> {
   let accessToken = "";
 
@@ -502,6 +505,8 @@ const WORKSPACE_CONVERSATION_MESSAGES = [
   },
 ] as const;
 
+const INITIAL_COMPOSER_DRAFT =
+  "Write a concise customer-facing launch update that opens with the pilot result, explains what changed, and ends with a clear next step.";
 const WORKSPACE_COMPOSITION_NOTES = [
   "Audience stays visible beside the conversation so composition choices remain grounded.",
   "Proof points can be staged here before the dedicated draft panel appears.",
@@ -509,6 +514,7 @@ const WORKSPACE_COMPOSITION_NOTES = [
 ] as const;
 
 const WORKSPACE_COMPOSER_TAGS = ["Audience: customers", "Tone: confident", "CTA: request demo"] as const;
+const ACTIVE_WORKSPACE_THREAD_ID = WORKSPACE_THREAD_HISTORY[0]?.id ?? "thread-launch-announcement";
 const NARROW_SCREEN_WORKSPACE_NOTES = [
   "The active thread stays first so replies can be shaped without scrolling through account chrome.",
   "History and profile context drop below the composer once the core workflow is already in view.",
@@ -526,8 +532,58 @@ const VOICE_CREATION_TRAITS = [
   "Clear CTA endings",
 ] as const;
 
-export default async function WorkspacePage() {
+function readSearchParamValue(value: WorkspaceSearchParamValue): string | null {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value) && typeof value[0] === "string") {
+    return value[0];
+  }
+
+  return null;
+}
+
+async function resolveWorkspaceSearchParams(
+  value: Promise<WorkspaceSearchParams> | WorkspaceSearchParams | undefined,
+): Promise<WorkspaceSearchParams> {
+  if (!value) {
+    return {};
+  }
+
+  return "then" in value ? await value : value;
+}
+
+function getWorkspaceConversationMessages(searchParams: WorkspaceSearchParams) {
+  const submittedThreadId = readSearchParamValue(searchParams.threadId);
+  const submittedMessage = readSearchParamValue(searchParams.message);
+
+  if (submittedThreadId !== ACTIVE_WORKSPACE_THREAD_ID || submittedMessage === null) {
+    return WORKSPACE_CONVERSATION_MESSAGES;
+  }
+
+  return [
+    ...WORKSPACE_CONVERSATION_MESSAGES,
+    {
+      id: "user-submission",
+      accentClassName: "border-sky-300/20 bg-sky-200/10 text-sky-100",
+      body: submittedMessage,
+      detail: "New user message",
+      speaker: "You",
+    },
+  ] as const;
+}
+
+interface WorkspacePageProps {
+  searchParams?: Promise<WorkspaceSearchParams> | WorkspaceSearchParams;
+}
+
+export default async function WorkspacePage({ searchParams }: WorkspacePageProps = {}) {
   const { sidebarIdentity, voiceProfiles } = await loadWorkspaceContext();
+  const resolvedSearchParams = await resolveWorkspaceSearchParams(searchParams);
+  const conversationMessages = getWorkspaceConversationMessages(resolvedSearchParams);
+  const composerDraft =
+    readSearchParamValue(resolvedSearchParams.message) === null ? INITIAL_COMPOSER_DRAFT : "";
   const featuredVoiceProfile = voiceProfiles[0] ?? null;
 
   return (
@@ -659,11 +715,11 @@ export default async function WorkspacePage() {
                       </p>
                     </div>
                     <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-stone-200">
-                      {WORKSPACE_CONVERSATION_MESSAGES.length} turns
+                      {conversationMessages.length} turns
                     </span>
                   </div>
                   <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
-                    {WORKSPACE_CONVERSATION_MESSAGES.map((message) => (
+                    {conversationMessages.map((message) => (
                       <article
                         key={message.id}
                         className="rounded-[1.35rem] border border-white/10 bg-white/[0.04] p-4"
@@ -729,50 +785,54 @@ export default async function WorkspacePage() {
                     Primary action
                   </span>
                 </div>
-                <div className="mt-4">
-                  <label
-                    className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400"
-                    htmlFor="workspace-message-composer"
-                  >
-                    Message draft
-                  </label>
-                  <textarea
-                    id="workspace-message-composer"
-                    className="mt-3 min-h-32 w-full rounded-[1.35rem] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-7 text-stone-100 outline-none placeholder:text-stone-500 focus:border-white/20"
-                    defaultValue="Write a concise customer-facing launch update that opens with the pilot result, explains what changed, and ends with a clear next step."
-                    rows={5}
-                  />
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {WORKSPACE_COMPOSER_TAGS.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-stone-200"
+                <form action="/workspace" aria-label="Message composer form" className="mt-4" method="get">
+                  <input name="threadId" type="hidden" value={ACTIVE_WORKSPACE_THREAD_ID} />
+                  <div>
+                    <label
+                      className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-stone-400"
+                      htmlFor="workspace-message-composer"
                     >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-5 flex flex-col gap-4 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm leading-6 text-stone-300">
-                    Conversation context stays visible above while the draft panel stays out of
-                    view.
-                  </p>
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-stone-100 transition hover:border-white/20 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
-                      type="button"
-                    >
-                      Save thought
-                    </button>
-                    <button
-                      className="inline-flex items-center justify-center rounded-full border border-emerald-300/20 bg-emerald-200/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
-                      type="button"
-                    >
-                      Shape response
-                    </button>
+                      Message draft
+                    </label>
+                    <textarea
+                      id="workspace-message-composer"
+                      className="mt-3 min-h-32 w-full rounded-[1.35rem] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-7 text-stone-100 outline-none placeholder:text-stone-500 focus:border-white/20"
+                      defaultValue={composerDraft}
+                      name="message"
+                      rows={5}
+                    />
                   </div>
-                </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {WORKSPACE_COMPOSER_TAGS.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-stone-200"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-5 flex flex-col gap-4 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm leading-6 text-stone-300">
+                      Conversation context stays visible above while the draft panel stays out of
+                      view.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-stone-100 transition hover:border-white/20 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+                        type="button"
+                      >
+                        Save thought
+                      </button>
+                      <button
+                        className="inline-flex items-center justify-center rounded-full border border-emerald-300/20 bg-emerald-200/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+                        type="submit"
+                      >
+                        Shape response
+                      </button>
+                    </div>
+                  </div>
+                </form>
               </section>
               </div>
             </div>

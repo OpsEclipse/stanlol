@@ -99,4 +99,5 @@ Blocked Feature #F177 Persist imported sample rows — added `lib/voice-samples.
 ✓ Feature #F153 Create voice list view — done
 ✓ Feature #F212 Implement PATCH /api/voices route — done
 ✓ Feature #F155 Create voice detail and edit view — done
+✓ Feature #F072 Submit user message from composer — done
 ✓ Feature #F211 Implement POST /api/voices route — done

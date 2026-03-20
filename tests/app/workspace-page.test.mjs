@@ -438,6 +438,15 @@ test("workspace page shows thread activity times in the sidebar history list", a
     forms.some((form) => form.props["aria-label"] === "Voice profile fields"),
     true,
   );
+  assert.equal(
+    forms.some(
+      (form) =>
+        form.props["aria-label"] === "Message composer form" &&
+        form.props.action === "/workspace" &&
+        form.props.method === "get",
+    ),
+    true,
+  );
   assert.equal(forms.some((form) => form.props["aria-label"] === "Voice detail editor"), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Save thought")), true);
   assert.equal(buttons.some((button) => collectText(button).join(" ").includes("Shape response")), true);
@@ -459,6 +468,54 @@ test("workspace page shows thread activity times in the sidebar history list", a
     assert.equal(String(timeElement.props.dateTime).length > 0, true);
     assert.equal(collectText(timeElement).join("").trim().length > 0, true);
   }
+});
+
+test("workspace page appends a submitted composer message into the active thread", async (t) => {
+  const projectRoot = process.cwd();
+  const outputDirectory = compilePageFixture(projectRoot);
+
+  t.after(() => {
+    rmSync(outputDirectory, { force: true, recursive: true });
+    delete globalThis.__stanlolWorkspaceCookies;
+    delete globalThis.__stanlolWorkspaceProfile;
+    delete globalThis.__stanlolWorkspaceVoices;
+  });
+
+  const pageModulePath = resolve(outputDirectory, "app/workspace/page.js");
+
+  assert.equal(existsSync(pageModulePath), true);
+
+  globalThis.__stanlolWorkspaceCookies = new Map([
+    ["stanlol-access-token", { value: "header.eyJlbWFpbCI6IndyaXRlckBleGFtcGxlLmNvbSIsIm5hbWUiOiJTdGFuIFdyaXRlciJ9.signature" }],
+  ]);
+  globalThis.__stanlolWorkspaceProfile = {
+    created_at: "2026-03-19T20:00:00.000Z",
+    display_name: "Stan Writer",
+    email: "writer@example.com",
+    id: "user-123",
+    updated_at: "2026-03-19T20:15:00.000Z",
+  };
+  globalThis.__stanlolWorkspaceVoices = [];
+
+  const pageModule = await import(pathToFileURL(pageModulePath).href);
+  const view = resolveElementTree(
+    await pageModule.default({
+      searchParams: Promise.resolve({
+        message: "Keep the CTA to one sentence and make the pilot result the first line.",
+        threadId: "thread-launch-announcement",
+      }),
+    }),
+  );
+  const text = collectText(view).join(" ");
+  const textareas = findElementsByType(view, "textarea");
+
+  assert.match(text, /4\s+turns/);
+  assert.match(text, /New user message/);
+  assert.match(text, /Keep the CTA to one sentence and make the pilot result the first line\./);
+  assert.equal(
+    textareas.some((textarea) => textarea.props.id === "workspace-message-composer" && textarea.props.defaultValue === ""),
+    true,
+  );
 });
 
 test("POST /auth/sign-out clears auth cookies and redirects to the sign-in screen", async (t) => {
