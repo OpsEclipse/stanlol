@@ -95,7 +95,7 @@
       "id": "F014",
       "name": "Create external link utility",
       "description": "Add a safe helper for external navigation such as opening LinkedIn.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
