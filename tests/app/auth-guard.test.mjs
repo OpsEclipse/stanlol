@@ -141,6 +141,7 @@ function compileVoicesRouteFixture(projectRoot) {
     ['from "../../../lib/json-response";', 'from "../../../lib/json-response.js";'],
     ['from "../../../lib/validation";', 'from "../../../lib/validation.js";'],
     ['from "../../../lib/voice-list";', 'from "../../../lib/voice-list.js";'],
+    ['from "../../../lib/voice-update";', 'from "../../../lib/voice-update.js";'],
   ]);
   rewriteCompiledImports(resolve(outputDirectory, "lib/authenticated-api.js"), [
     ['from "./api-route-error";', 'from "./api-route-error.js";'],
@@ -151,6 +152,9 @@ function compileVoicesRouteFixture(projectRoot) {
     ['from "./json-response";', 'from "./json-response.js";'],
   ]);
   rewriteCompiledImports(resolve(outputDirectory, "lib/voice-list.js"), [
+    ['from "./db.ts";', 'from "./db.js";'],
+  ]);
+  rewriteCompiledImports(resolve(outputDirectory, "lib/voice-update.js"), [
     ['from "./db.ts";', 'from "./db.js";'],
   ]);
 
@@ -295,6 +299,23 @@ test("protected API routes reject unauthenticated requests with a 401 response",
       invoke: () => voicesModule.GET(new Request("https://stanlol.test/api/voices")),
       name: "GET /api/voices without a bearer token",
     },
+    {
+      invoke: () =>
+        voicesModule.PATCH(
+          new Request("https://stanlol.test/api/voices", {
+            body: JSON.stringify({
+              instructions: "Keep the writing direct and practical.",
+              name: "Operator",
+              voiceId: "voice-123",
+            }),
+            headers: {
+              "content-type": "application/json",
+            },
+            method: "PATCH",
+          }),
+        ),
+      name: "PATCH /api/voices without a bearer token",
+    },
   ];
 
   for (const testCase of cases) {
@@ -368,6 +389,24 @@ test("protected API routes return a 401 response when bearer token verification 
               }),
             ),
           name: "GET /api/voices",
+        },
+        {
+          invoke: () =>
+            voicesModule.PATCH(
+              new Request("https://stanlol.test/api/voices", {
+                body: JSON.stringify({
+                  instructions: "Keep the writing direct and practical.",
+                  name: "Operator",
+                  voiceId: "voice-123",
+                }),
+                headers: {
+                  authorization: "Bearer expired-token",
+                  "content-type": "application/json",
+                },
+                method: "PATCH",
+              }),
+            ),
+          name: "PATCH /api/voices",
         },
       ];
 

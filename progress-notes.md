@@ -93,3 +93,4 @@ Blocked Feature #F177 Persist imported sample rows — added `lib/voice-samples.
 ✓ Feature #F044 Create hidden draft panel region — done
 ✓ Feature #F046 Add responsive narrow-screen workspace behavior — done
 ✓ Feature #F145 Create voice creation form UI — done
+✓ Feature #F212 Implement PATCH /api/voices route — done

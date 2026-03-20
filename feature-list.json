@@ -1481,7 +1481,7 @@
       "id": "F212",
       "name": "Implement PATCH /api/voices route",
       "description": "Create the route for updating an existing voice profile.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F007", "F008", "F150"]
     },
     {
