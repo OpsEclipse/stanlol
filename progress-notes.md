@@ -63,3 +63,6 @@ Blocked Feature #F092 Create draft revisions migration — implementation added 
 ✓ Feature #F066 Persist placeholder thread title — done
 ✓ Feature #F206 Implement POST /api/chat/threads route — done
 ✓ Feature #F144 Create voice fetch and list helper — done
+✓ Feature #F138 Store revision reason in audit events — done
+✓ Feature #F063 Add thread ownership enforcement — done
+✓ Feature #F210 Implement GET /api/voices route — done

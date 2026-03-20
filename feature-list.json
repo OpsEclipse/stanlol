@@ -438,7 +438,7 @@
       "id": "F063",
       "name": "Add thread ownership enforcement",
       "description": "Prevent users from reading or mutating threads they do not own.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F061", "F022"]
     },
     {
@@ -963,7 +963,7 @@
       "id": "F138",
       "name": "Store revision reason in audit events",
       "description": "Persist whether a generation was an initial draft or a refinement request.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F018", "F134"]
     },
     {
@@ -998,7 +998,7 @@
       "id": "F143",
       "name": "Add voice ownership enforcement",
       "description": "Prevent users from reading or mutating voices they do not own.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F141", "F022"]
     },
     {
@@ -1229,7 +1229,7 @@
       "id": "F176",
       "name": "Persist manual import batch record",
       "description": "Store a record of each manual import action for later reference.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F018", "F141"]
     },
     {
@@ -1467,7 +1467,7 @@
       "id": "F210",
       "name": "Implement GET /api/voices route",
       "description": "Create the route for listing the current user's saved voices.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F008", "F144"]
     },
     {
