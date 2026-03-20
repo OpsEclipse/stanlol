@@ -459,7 +459,7 @@
       "id": "F066",
       "name": "Persist placeholder thread title",
       "description": "Store an initial title for each thread before a better summary is available.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F061", "F064"]
     },
     {
@@ -641,7 +641,7 @@
       "id": "F092",
       "name": "Create draft revisions migration",
       "description": "Add the persistent table for saved draft revision history.",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": ["F003", "F091"]
     },
     {
@@ -655,7 +655,7 @@
       "id": "F094",
       "name": "Create draft fetch helper",
       "description": "Add a shared database helper for loading the current draft for a thread.",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": ["F003", "F091"]
     },
     {
@@ -949,21 +949,21 @@
       "id": "F136",
       "name": "Store model identifier in audit events",
       "description": "Capture which model produced or attempted the generation result.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F018", "F134"]
     },
     {
       "id": "F137",
       "name": "Store generation latency in audit events",
       "description": "Capture generation duration for performance and debugging analysis.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F018", "F134"]
     },
     {
       "id": "F138",
       "name": "Store revision reason in audit events",
       "description": "Persist whether a generation was an initial draft or a refinement request.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F018", "F134"]
     },
     {
@@ -984,14 +984,14 @@
       "id": "F141",
       "name": "Create voice profiles migration",
       "description": "Add the persistent table for reusable writing voices.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F021"]
     },
     {
       "id": "F142",
       "name": "Create voice samples migration",
       "description": "Add the persistent table for imported or pasted voice samples.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F141"]
     },
     {
@@ -1005,7 +1005,7 @@
       "id": "F144",
       "name": "Create voice fetch and list helper",
       "description": "Add shared data access for listing and loading voice profiles.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F141"]
     },
     {
@@ -1439,7 +1439,7 @@
       "id": "F206",
       "name": "Implement POST /api/chat/threads route",
       "description": "Create the route for starting a new chat thread.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F007", "F008", "F064"]
     },
     {
@@ -1593,7 +1593,7 @@
       "id": "F228",
       "name": "Add API route error logging",
       "description": "Capture route-level failures in a consistent debugging log path.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F019"]
     },
     {
@@ -1642,7 +1642,7 @@
       "id": "F235",
       "name": "Add dev auto-login environment gate tests",
       "description": "Verify auto-login works only when explicitly enabled in local development.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F039", "F040", "F220"]
     }
   ]

@@ -50,5 +50,16 @@ Paused orchestration — only ready features are migration-backed (`F018`, `F021
 ✓ Feature #F091 Create drafts migration — done
 ✓ Feature #F067 Create thread list query — done
 ✓ Feature #F207 Implement GET /api/chat/threads route — done
-✓ Feature #F220 Implement POST /api/dev/auto-login route — done
+Blocked Feature #F094 Create draft fetch helper — implementation added in `lib/draft-fetch.ts`, but `npm test` still fails after 3 attempts because the pre-existing `tests/app/api-dev-auto-login-route.test.mjs` fixture cannot compile `app/api/dev/auto-login/route.ts` and its auth-session dependencies.
 ✓ Feature #F085 Show thread timestamp in history — done
+Blocked Feature #F092 Create draft revisions migration — implementation added in `supabase/migrations/202603190006_create_draft_revisions.sql` with `tests/supabase/draft-revisions-migration.test.mjs`, but `npm test` still fails after 3 attempts because the pre-existing route-fixture suites cannot compile `app/api/chat/threads/route.ts` and the dev auto-login fixture still fails resolving `next/server`.
+✓ Feature #F136 Store model identifier in audit events — done
+✓ Feature #F228 Add API route error logging — done
+✓ Feature #F220 Implement POST /api/dev/auto-login route — done
+✓ Feature #F137 Store generation latency in audit events — done
+✓ Feature #F235 Add dev auto-login environment gate tests — done
+✓ Feature #F141 Create voice profiles migration — done
+✓ Feature #F142 Create voice samples migration — done
+✓ Feature #F066 Persist placeholder thread title — done
+✓ Feature #F206 Implement POST /api/chat/threads route — done
+✓ Feature #F144 Create voice fetch and list helper — done
