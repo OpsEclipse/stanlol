@@ -4,7 +4,7 @@ This document records every API route and its request and response shape.
 
 ## Current State
 
-- No application API routes exist yet under `app/api/`.
+- `POST /api/dev/auto-login` exists for local seeded-account development sign-in.
 
 ## Route Contract Rules
 
@@ -25,3 +25,16 @@ For each route, document:
 - Error response
 - Auth requirements
 - Side effects
+
+## Routes
+
+### `POST /api/dev/auto-login`
+
+- Route path: `/api/dev/auto-login`
+- HTTP method: `POST`
+- Input shape: empty JSON object or no body
+- Validation rules: rejects invalid JSON and unexpected payload fields
+- Success response: `{ success: true, data: { user: { id, email, displayName } } }`
+- Error response: `{ success: false, error: string }`
+- Auth requirements: no prior session; route is restricted to explicit local development auto-login
+- Side effects: looks up the seeded local test account, generates and verifies a Supabase magic-link session, syncs the user profile, and sets auth session cookies

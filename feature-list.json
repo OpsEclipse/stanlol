@@ -130,7 +130,7 @@
       "id": "F019",
       "name": "Create generation audit logging service",
       "description": "Add a shared service for writing generation success and failure audit events.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F018"]
     },
     {
@@ -151,70 +151,70 @@
       "id": "F022",
       "name": "Create user profile fetch helper",
       "description": "Add a shared database helper for loading the current user's profile.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F021"]
     },
     {
       "id": "F023",
       "name": "Sync profile on first sign-in",
       "description": "Create or update a user profile record the first time a user authenticates.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F022"]
     },
     {
       "id": "F024",
       "name": "Add Google OAuth sign-in screen",
       "description": "Provide a Google sign-in path for authenticated workspace access.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F021"]
     },
     {
       "id": "F025",
       "name": "Add magic link sign-in screen",
       "description": "Provide an email magic link sign-in path for authenticated workspace access.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F021"]
     },
     {
       "id": "F026",
       "name": "Add auth callback handler",
       "description": "Handle OAuth and magic link completion and transition users into the workspace.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F021", "F022"]
     },
     {
       "id": "F027",
       "name": "Add signed-out route protection",
       "description": "Prevent anonymous users from accessing the authenticated workspace.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F022", "F026"]
     },
     {
       "id": "F028",
       "name": "Add authenticated workspace redirect",
       "description": "Send authenticated users directly to the main workspace experience.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F027"]
     },
     {
       "id": "F029",
       "name": "Add sign-out control",
       "description": "Let authenticated users end their session from the product UI.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F026"]
     },
     {
       "id": "F030",
       "name": "Add sidebar profile summary",
       "description": "Show the current user's account identity in the quiet left sidebar.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F022", "F026"]
     },
     {
       "id": "F031",
       "name": "Add basic account settings panel",
       "description": "Provide a lightweight settings surface for account and workspace controls.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F030"]
     },
     {
@@ -235,21 +235,21 @@
       "id": "F034",
       "name": "Add auth bootstrap loading state",
       "description": "Show a clean loading experience while the session state is being resolved.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F010", "F026"]
     },
     {
       "id": "F035",
       "name": "Add auth error messaging",
       "description": "Surface authentication failures without exposing raw provider errors.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F011", "F026"]
     },
     {
       "id": "F036",
       "name": "Add session refresh handling",
       "description": "Keep the authenticated workspace usable across normal session refresh behavior.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F026"]
     },
     {
@@ -270,42 +270,42 @@
       "id": "F039",
       "name": "Add dev auto-login environment gate",
       "description": "Require an explicit local environment flag before auto-login can execute.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F017", "F038"]
     },
     {
       "id": "F040",
       "name": "Add preview and production auto-login deny behavior",
       "description": "Hard-block the dev auto-login path outside local development environments.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F017", "F039"]
     },
     {
       "id": "F041",
       "name": "Create full-height workspace frame",
       "description": "Build the primary authenticated layout with a full-height focused workspace.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F028"]
     },
     {
       "id": "F042",
       "name": "Create minimal left sidebar layout",
       "description": "Build the visually quiet sidebar for history, profile, and settings entry points.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F041"]
     },
     {
       "id": "F043",
       "name": "Create center chat panel layout",
       "description": "Build the main working surface for conversation and composition.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F041"]
     },
     {
       "id": "F044",
       "name": "Create hidden draft panel region",
       "description": "Define the right-side draft panel container that starts hidden before a draft exists.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F041"]
     },
     {
@@ -319,7 +319,7 @@
       "id": "F046",
       "name": "Add responsive narrow-screen workspace behavior",
       "description": "Preserve the product's core workflow on smaller screens without cluttering the layout.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F041"]
     },
     {
@@ -382,7 +382,7 @@
       "id": "F055",
       "name": "Create bottom-anchored composer",
       "description": "Place the chat input at the bottom of the center panel as the primary action area.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F043"]
     },
     {
@@ -431,14 +431,14 @@
       "id": "F062",
       "name": "Create chat messages migration",
       "description": "Add the persistent table for ordered messages within each thread.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F061"]
     },
     {
       "id": "F063",
       "name": "Add thread ownership enforcement",
       "description": "Prevent users from reading or mutating threads they do not own.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F061", "F022"]
     },
     {
@@ -459,14 +459,14 @@
       "id": "F066",
       "name": "Persist placeholder thread title",
       "description": "Store an initial title for each thread before a better summary is available.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F061", "F064"]
     },
     {
       "id": "F067",
       "name": "Create thread list query",
       "description": "Add a user-scoped query for retrieving recent thread history.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F061"]
     },
     {
@@ -501,7 +501,7 @@
       "id": "F072",
       "name": "Submit user message from composer",
       "description": "Send a new user message from the chat composer into the active thread.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F055"]
     },
     {
@@ -529,14 +529,14 @@
       "id": "F076",
       "name": "Persist user message row",
       "description": "Save each submitted user message to the thread message history.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F062", "F072"]
     },
     {
       "id": "F077",
       "name": "Persist assistant message row",
       "description": "Save each assistant response to the thread message history.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F062"]
     },
     {
@@ -592,7 +592,7 @@
       "id": "F085",
       "name": "Show thread timestamp in history",
       "description": "Display recent thread activity times in the sidebar history list.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F015", "F067"]
     },
     {
@@ -634,28 +634,28 @@
       "id": "F091",
       "name": "Create drafts migration",
       "description": "Add the persistent table for the single active draft associated with a thread.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F061"]
     },
     {
       "id": "F092",
       "name": "Create draft revisions migration",
       "description": "Add the persistent table for saved draft revision history.",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": ["F003", "F091"]
     },
     {
       "id": "F093",
       "name": "Enforce one active draft per thread",
       "description": "Make the one-thread-to-one-active-draft product rule explicit in persistence logic.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F091"]
     },
     {
       "id": "F094",
       "name": "Create draft fetch helper",
       "description": "Add a shared database helper for loading the current draft for a thread.",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": ["F003", "F091"]
     },
     {
@@ -669,7 +669,7 @@
       "id": "F096",
       "name": "Add readiness evaluation before first draft",
       "description": "Decide when the conversation has enough signal to generate the first post draft.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F005", "F061", "F062"]
     },
     {
@@ -844,7 +844,7 @@
       "id": "F121",
       "name": "Load thread context for generation",
       "description": "Provide the active thread messages to the assistant generation flow.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F005", "F061", "F062"]
     },
     {
@@ -872,21 +872,21 @@
       "id": "F125",
       "name": "Build conversation context prompt",
       "description": "Assemble the active thread history into a clean prompt input for the assistant.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F121"]
     },
     {
       "id": "F126",
       "name": "Classify exploratory versus ready-to-draft state",
       "description": "Distinguish early exploratory chat from threads that are ready for draft output.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F096", "F121", "F124", "F125"]
     },
     {
       "id": "F127",
       "name": "Avoid premature draft generation",
       "description": "Tune the assistant to avoid creating drafts too early on low-signal threads.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F126"]
     },
     {
@@ -942,28 +942,28 @@
       "id": "F135",
       "name": "Log generation failure audit events",
       "description": "Record failed generation attempts for later debugging and analysis.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F019", "F133"]
     },
     {
       "id": "F136",
       "name": "Store model identifier in audit events",
       "description": "Capture which model produced or attempted the generation result.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F018", "F134"]
     },
     {
       "id": "F137",
       "name": "Store generation latency in audit events",
       "description": "Capture generation duration for performance and debugging analysis.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F018", "F134"]
     },
     {
       "id": "F138",
       "name": "Store revision reason in audit events",
       "description": "Persist whether a generation was an initial draft or a refinement request.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F018", "F134"]
     },
     {
@@ -984,35 +984,35 @@
       "id": "F141",
       "name": "Create voice profiles migration",
       "description": "Add the persistent table for reusable writing voices.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F021"]
     },
     {
       "id": "F142",
       "name": "Create voice samples migration",
       "description": "Add the persistent table for imported or pasted voice samples.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F141"]
     },
     {
       "id": "F143",
       "name": "Add voice ownership enforcement",
       "description": "Prevent users from reading or mutating voices they do not own.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F141", "F022"]
     },
     {
       "id": "F144",
       "name": "Create voice fetch and list helper",
       "description": "Add shared data access for listing and loading voice profiles.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F141"]
     },
     {
       "id": "F145",
       "name": "Create voice creation form UI",
       "description": "Add the UI for creating a new reusable writing voice.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F031"]
     },
     {
@@ -1040,14 +1040,14 @@
       "id": "F149",
       "name": "Persist new voice record",
       "description": "Save a newly created voice profile for the current user.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F141", "F145"]
     },
     {
       "id": "F150",
       "name": "Persist voice updates",
       "description": "Save edits to an existing voice profile.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F141", "F145"]
     },
     {
@@ -1068,7 +1068,7 @@
       "id": "F153",
       "name": "Create voice list view",
       "description": "Display all saved voices inside the lightweight settings workflow.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F144", "F031"]
     },
     {
@@ -1082,7 +1082,7 @@
       "id": "F155",
       "name": "Create voice detail and edit view",
       "description": "Show a single voice with edit controls and import options.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F144", "F153"]
     },
     {
@@ -1159,7 +1159,7 @@
       "id": "F166",
       "name": "Add manual import entry point",
       "description": "Provide a manual voice import action inside the voice detail workflow.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F155"]
     },
     {
@@ -1229,14 +1229,14 @@
       "id": "F176",
       "name": "Persist manual import batch record",
       "description": "Store a record of each manual import action for later reference.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F018", "F141"]
     },
     {
       "id": "F177",
       "name": "Persist imported sample rows",
       "description": "Save parsed manual sample content for a voice profile.",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": ["F142", "F176"]
     },
     {
@@ -1334,7 +1334,7 @@
       "id": "F191",
       "name": "Create uploaded assets migration",
       "description": "Add the persistent table for uploaded images associated with drafts.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F021"]
     },
     {
@@ -1439,14 +1439,14 @@
       "id": "F206",
       "name": "Implement POST /api/chat/threads route",
       "description": "Create the route for starting a new chat thread.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F007", "F008", "F064"]
     },
     {
       "id": "F207",
       "name": "Implement GET /api/chat/threads route",
       "description": "Create the route for listing the current user's chat threads.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F008", "F067"]
     },
     {
@@ -1467,21 +1467,21 @@
       "id": "F210",
       "name": "Implement GET /api/voices route",
       "description": "Create the route for listing the current user's saved voices.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F008", "F144"]
     },
     {
       "id": "F211",
       "name": "Implement POST /api/voices route",
       "description": "Create the route for creating a new voice profile.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F007", "F008", "F149"]
     },
     {
       "id": "F212",
       "name": "Implement PATCH /api/voices route",
       "description": "Create the route for updating an existing voice profile.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F007", "F008", "F150"]
     },
     {
@@ -1537,7 +1537,7 @@
       "id": "F220",
       "name": "Implement POST /api/dev/auto-login route",
       "description": "Create the development-only route for local seeded-account auto-login.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F007", "F039", "F040"]
     },
     {
@@ -1593,7 +1593,7 @@
       "id": "F228",
       "name": "Add API route error logging",
       "description": "Capture route-level failures in a consistent debugging log path.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F019"]
     },
     {
@@ -1607,7 +1607,7 @@
       "id": "F230",
       "name": "Add auth guard tests",
       "description": "Verify protected UI and API flows reject unauthenticated access correctly.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F027", "F037"]
     },
     {
@@ -1642,7 +1642,7 @@
       "id": "F235",
       "name": "Add dev auto-login environment gate tests",
       "description": "Verify auto-login works only when explicitly enabled in local development.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F039", "F040", "F220"]
     }
   ]

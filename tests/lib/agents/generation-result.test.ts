@@ -15,6 +15,7 @@ import {
   getAssistantOutputText,
   hasAssistantOutput,
   isFailedGenerationResult,
+  logFailedGenerationResult,
   logSuccessfulGenerationResult,
 } from "../../../lib/agents/generation-result.ts";
 
@@ -233,5 +234,122 @@ test("logSuccessfulGenerationResult rejects failed generation results", async ()
         },
       ),
     /Successful generation audit events require a non-failed generation result/,
+  );
+});
+
+test("logFailedGenerationResult writes a failure audit event from the structured result contract", async () => {
+  const result = createFailedGenerationResult({
+    code: " request-failed ",
+    message: " OpenAI timed out ",
+    model: " gpt-5-mini ",
+    operation: "revise",
+    promptVersion: " draft-orchestration-v1 ",
+    responseId: " resp_456 ",
+  });
+  let insertCall: {
+    options?: DbMutationOptions;
+    table: string;
+    values: DbMutationPayload;
+  } | null = null;
+  const insert: SupabaseDbClient["insert"] = async <T extends DbRow = DbRow>(
+    table: string,
+    values: DbMutationPayload | readonly DbMutationPayload[],
+    options?: DbMutationOptions,
+  ): Promise<T[]> => {
+    if (Array.isArray(values)) {
+      throw new Error("Expected a single generation audit insert payload.");
+    }
+
+    const normalizedValues = values as DbMutationPayload;
+
+    insertCall = {
+      options,
+      table,
+      values: normalizedValues,
+    };
+
+    return [
+      {
+        created_at: "2026-03-19T20:05:00.000Z",
+        id: "audit-2",
+        ...normalizedValues,
+      },
+    ] as unknown as T[];
+  };
+
+  const row = await logFailedGenerationResult(
+    {
+      insert,
+    } as never,
+    result,
+    {
+      draftId: " draft-456 ",
+      threadId: " thread-456 ",
+      userId: " user-456 ",
+      voiceId: " voice-456 ",
+    },
+  );
+
+  assert.equal(row.outcome, "failure");
+  assert.deepEqual(insertCall, {
+    options: {
+      columns: [
+        "id",
+        "user_id",
+        "thread_id",
+        "draft_id",
+        "voice_id",
+        "outcome",
+        "revision_reason",
+        "model_identifier",
+        "generation_latency_ms",
+        "error_message",
+        "metadata",
+        "created_at",
+      ],
+    },
+    table: "generation_audit_events",
+    values: {
+      draft_id: "draft-456",
+      error_message: "OpenAI timed out",
+      generation_latency_ms: null,
+      metadata: {
+        errorCode: "request-failed",
+        promptVersion: "draft-orchestration-v1",
+        responseId: "resp_456",
+        resultStatus: "failed",
+        resultVersion: GENERATION_RESULT_VERSION,
+      },
+      model_identifier: null,
+      outcome: "failure",
+      revision_reason: null,
+      thread_id: "thread-456",
+      user_id: "user-456",
+      voice_id: "voice-456",
+    },
+  });
+});
+
+test("logFailedGenerationResult rejects non-failed generation results", async () => {
+  const successfulResult = createGeneratedGenerationResult({
+    model: "gpt-5",
+    operation: "create",
+    outputText: "A tighter launch update for LinkedIn.",
+    promptVersion: "draft-orchestration-v1",
+    responseId: "resp_123",
+  });
+
+  await assert.rejects(
+    () =>
+      logFailedGenerationResult(
+        {
+          insert: async () => [],
+        } as never,
+        successfulResult,
+        {
+          userId: "user-123",
+        },
+      ),
+    /Failed generation audit events require a failed generation result/,
   );
 });
