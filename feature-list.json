@@ -900,7 +900,7 @@
       "id": "F129",
       "name": "Add explicit agent termination conditions",
       "description": "Ensure every generation flow has a clear stop condition.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F005"]
     },
     {
@@ -928,7 +928,7 @@
       "id": "F133",
       "name": "Create structured generation result contract",
       "description": "Return assistant outputs in a stable structure that the routes and draft pipeline can consume.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F005", "F006"]
     },
     {
