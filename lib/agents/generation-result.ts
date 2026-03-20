@@ -1,5 +1,6 @@
 import type { SupabaseDbClient } from "../db.ts";
 import {
+  logGenerationFailure,
   logGenerationSuccess,
   type GenerationAuditEventRow,
   type GenerationAuditMetadata,
@@ -84,6 +85,13 @@ export interface LogSuccessfulGenerationResultOptions {
   voiceId?: string | null;
 }
 
+export interface LogFailedGenerationResultOptions {
+  draftId?: string | null;
+  threadId?: string | null;
+  userId: string;
+  voiceId?: string | null;
+}
+
 function readRequiredText(value: string, fieldName: string): string {
   const normalizedValue = value.trim();
 
@@ -130,6 +138,18 @@ function createSuccessfulGenerationAuditMetadata(
   return {
     assistantRole: result.assistant.role,
     assistantTextLength: result.assistant.text.length,
+    promptVersion: result.generation.promptVersion,
+    responseId: result.generation.responseId,
+    resultStatus: result.status,
+    resultVersion: result.version,
+  };
+}
+
+function createFailedGenerationAuditMetadata(
+  result: FailedGenerationResult,
+): GenerationAuditMetadata {
+  return {
+    errorCode: result.error.code,
     promptVersion: result.generation.promptVersion,
     responseId: result.generation.responseId,
     resultStatus: result.status,
@@ -212,5 +232,21 @@ export async function logSuccessfulGenerationResult(
   return logGenerationSuccess(db, {
     ...options,
     metadata: createSuccessfulGenerationAuditMetadata(result),
+  });
+}
+
+export async function logFailedGenerationResult(
+  db: SupabaseDbClient,
+  result: GenerationResult,
+  options: LogFailedGenerationResultOptions,
+): Promise<GenerationAuditEventRow> {
+  if (!isFailedGenerationResult(result)) {
+    throw new Error("Failed generation audit events require a failed generation result.");
+  }
+
+  return logGenerationFailure(db, {
+    ...options,
+    errorMessage: result.error.message,
+    metadata: createFailedGenerationAuditMetadata(result),
   });
 }
