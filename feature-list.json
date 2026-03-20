@@ -529,7 +529,7 @@
       "id": "F076",
       "name": "Persist user message row",
       "description": "Save each submitted user message to the thread message history.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F062", "F072"]
     },
     {
@@ -1159,7 +1159,7 @@
       "id": "F166",
       "name": "Add manual import entry point",
       "description": "Provide a manual voice import action inside the voice detail workflow.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F155"]
     },
     {
