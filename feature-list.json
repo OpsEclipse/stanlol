@@ -130,7 +130,7 @@
       "id": "F019",
       "name": "Create generation audit logging service",
       "description": "Add a shared service for writing generation success and failure audit events.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F018"]
     },
     {
@@ -151,21 +151,21 @@
       "id": "F022",
       "name": "Create user profile fetch helper",
       "description": "Add a shared database helper for loading the current user's profile.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F021"]
     },
     {
       "id": "F023",
       "name": "Sync profile on first sign-in",
       "description": "Create or update a user profile record the first time a user authenticates.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F022"]
     },
     {
       "id": "F024",
       "name": "Add Google OAuth sign-in screen",
       "description": "Provide a Google sign-in path for authenticated workspace access.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F021"]
     },
     {
@@ -179,7 +179,7 @@
       "id": "F026",
       "name": "Add auth callback handler",
       "description": "Handle OAuth and magic link completion and transition users into the workspace.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F021", "F022"]
     },
     {
@@ -270,14 +270,14 @@
       "id": "F039",
       "name": "Add dev auto-login environment gate",
       "description": "Require an explicit local environment flag before auto-login can execute.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F017", "F038"]
     },
     {
       "id": "F040",
       "name": "Add preview and production auto-login deny behavior",
       "description": "Hard-block the dev auto-login path outside local development environments.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F017", "F039"]
     },
     {
@@ -431,7 +431,7 @@
       "id": "F062",
       "name": "Create chat messages migration",
       "description": "Add the persistent table for ordered messages within each thread.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F061"]
     },
     {
@@ -466,7 +466,7 @@
       "id": "F067",
       "name": "Create thread list query",
       "description": "Add a user-scoped query for retrieving recent thread history.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F061"]
     },
     {
@@ -634,7 +634,7 @@
       "id": "F091",
       "name": "Create drafts migration",
       "description": "Add the persistent table for the single active draft associated with a thread.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F003", "F061"]
     },
     {
@@ -942,7 +942,7 @@
       "id": "F135",
       "name": "Log generation failure audit events",
       "description": "Record failed generation attempts for later debugging and analysis.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F019", "F133"]
     },
     {
@@ -1537,7 +1537,7 @@
       "id": "F220",
       "name": "Implement POST /api/dev/auto-login route",
       "description": "Create the development-only route for local seeded-account auto-login.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": ["F006", "F007", "F039", "F040"]
     },
     {

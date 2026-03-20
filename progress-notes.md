@@ -35,6 +35,17 @@ Paused orchestration — only ready features are migration-backed (`F018`, `F021
 ✓ Feature #F021 Create user profiles migration — done
 ✓ Feature #F038 Add local test-account seeding lookup — done
 ✓ Feature #F018 Create generation audit event table — done
+✓ Feature #F022 Create user profile fetch helper — done
+✓ Feature #F024 Add Google OAuth sign-in screen — done
 ✓ Feature #F061 Create chat threads migration — done
-✓ Feature #F064 Create thread creation service — done
+✓ Feature #F039 Add dev auto-login environment gate — done
+✓ Feature #F023 Sync profile on first sign-in — done
+✓ Feature #F019 Create generation audit logging service — done
+✓ Feature #F026 Add auth callback handler — done
 ✓ Feature #F134 Log generation success audit events — done
+✓ Feature #F040 Add preview and production auto-login deny behavior — done
+✓ Feature #F064 Create thread creation service — done
+✓ Feature #F062 Create chat messages migration — done
+✓ Feature #F135 Log generation failure audit events — done
+✓ Feature #F091 Create drafts migration — done
+✓ Feature #F067 Create thread list query — done
