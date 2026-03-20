@@ -88,7 +88,7 @@
       "id": "F013",
       "name": "Create clipboard utility",
       "description": "Add a shared clipboard helper for copying the current draft text.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
