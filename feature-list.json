@@ -207,7 +207,7 @@
       "id": "F030",
       "name": "Add sidebar profile summary",
       "description": "Show the current user's account identity in the quiet left sidebar.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F022", "F026"]
     },
     {

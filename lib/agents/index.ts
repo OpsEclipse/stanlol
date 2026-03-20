@@ -1,11 +1,14 @@
 import { generateText, type OpenAiMessage } from "../ai.ts";
+import type { DbRow, SupabaseDbClient } from "../db.ts";
 
 export const AGENT_PROMPT_VERSION = "draft-orchestration-v1";
+export const CONVERSATION_CONTEXT_PROMPT_VERSION = "conversation-context-prompt-v1";
 export const DRAFT_READINESS_VERSION = "draft-readiness-v1";
 export const MAX_AGENT_STEPS = 2;
 export const MAX_GENERATION_STEPS = 1;
 export const REVISION_DECISION_OUTPUT_VERSION = "revision-decision-v1";
 export const MIN_MULTI_TURN_READY_USER_WORDS = 18;
+export const CHAT_MESSAGE_TABLE = "chat_messages";
 
 export type RevisionDecisionAction = "keep" | "revise";
 export type DraftOperation = "create" | "retain" | "revise";
@@ -36,10 +39,11 @@ export interface AgentImageContext {
 export interface DraftOrchestrationRequest {
   attachedImage?: AgentImageContext | null;
   currentDraft?: string | null;
-  messages: OpenAiMessage[];
+  messages?: OpenAiMessage[];
   metadata?: Record<string, string>;
   model?: string;
   signal?: AbortSignal;
+  threadId?: string;
   voice?: AgentVoiceContext | null;
 }
 
@@ -101,12 +105,22 @@ export class AgentError extends Error {
 }
 
 interface AgentDependencies {
+  db?: Pick<SupabaseDbClient, "select">;
   generateText?: typeof generateText;
 }
 
 interface DraftWorkflowMessage {
   content: string;
   role: DraftWorkflowMessageRole;
+}
+
+interface ThreadMessageRow extends DbRow {
+  content: string;
+  created_at: string;
+  id: string;
+  position: number;
+  role: "assistant" | "user";
+  thread_id: string;
 }
 
 interface DraftSignalSummary {
@@ -142,6 +156,8 @@ const REVISION_DECISION_INSTRUCTIONS = [
   "Unsupported requests such as publishing, scheduling, browsing, scraping, or third-party tool use are outside the product workflow and must not trigger external actions.",
   "Termination condition: make one classification and stop.",
 ].join("\n");
+
+const threadMessageColumns = ["id", "thread_id", "role", "content", "position", "created_at"] as const;
 
 function readRequiredText(value: string, fieldName: string): string {
   const normalizedValue = value.trim();
@@ -184,6 +200,13 @@ function normalizeMessages(messages: OpenAiMessage[]): DraftWorkflowMessage[] {
   return messages.map((message, index) => ({
     content: readRequiredText(message.content, `Message ${index + 1} content`),
     role: readWorkflowMessageRole(message.role, `Message ${index + 1} role`),
+  }));
+}
+
+function toOpenAiMessages(messages: DraftWorkflowMessage[]): OpenAiMessage[] {
+  return messages.map((message) => ({
+    content: message.content,
+    role: message.role,
   }));
 }
 
@@ -292,6 +315,18 @@ function serializeConversation(messages: DraftWorkflowMessage[]): string {
     .join("\n");
 }
 
+export function buildConversationContextPrompt(messages: OpenAiMessage[]): string {
+  const normalizedMessages = normalizeMessages(messages);
+
+  return [
+    `Conversation context version: ${CONVERSATION_CONTEXT_PROMPT_VERSION}`,
+    "Latest user request:",
+    getLatestUserMessage(normalizedMessages),
+    "Active thread history:",
+    serializeConversation(normalizedMessages),
+  ].join("\n\n");
+}
+
 function serializeVoiceContext(voice: AgentVoiceContext | null | undefined): string {
   if (!voice) {
     return "No active voice selected.";
@@ -340,6 +375,77 @@ function serializeImageContext(image: AgentImageContext | null | undefined): str
   return parts.join("\n");
 }
 
+async function loadThreadMessages(
+  db: Pick<SupabaseDbClient, "select">,
+  threadId: string,
+): Promise<DraftWorkflowMessage[]> {
+  try {
+    const rows = await db.select<ThreadMessageRow>(CHAT_MESSAGE_TABLE, {
+      columns: threadMessageColumns,
+      filters: [
+        {
+          column: "thread_id",
+          operator: "eq",
+          value: readRequiredText(threadId, "Chat thread threadId"),
+        },
+      ],
+      orderBy: [
+        {
+          column: "position",
+          ascending: true,
+        },
+        {
+          column: "created_at",
+          ascending: true,
+        },
+      ],
+    });
+
+    return normalizeMessages(
+      rows.map((row) => ({
+        content: row.content,
+        role: row.role,
+      })),
+    );
+  } catch (error) {
+    if (error instanceof AgentError) {
+      throw error;
+    }
+
+    throw new AgentError(
+      error instanceof Error ? `Failed to load thread messages: ${error.message}` : "Failed to load thread messages.",
+      "request-failed",
+    );
+  }
+}
+
+async function resolveMessages(
+  request: DraftOrchestrationRequest,
+  dependencies: AgentDependencies,
+): Promise<DraftWorkflowMessage[]> {
+  if (request.messages) {
+    return normalizeMessages(request.messages);
+  }
+
+  const threadId = normalizeOptionalText(request.threadId);
+
+  if (!threadId) {
+    throw new AgentError(
+      "Draft orchestration requires messages or a threadId.",
+      "invalid-input",
+    );
+  }
+
+  if (!dependencies.db) {
+    throw new AgentError(
+      "Thread-backed draft orchestration requires a database dependency.",
+      "invalid-input",
+    );
+  }
+
+  return loadThreadMessages(dependencies.db, threadId);
+}
+
 function buildMetadata(
   metadata: Record<string, string> | undefined,
   phase: "generation" | "revision-decision",
@@ -376,9 +482,10 @@ function getGenerationTerminationReason(
   return operation === "create" ? "draft-created" : "draft-revised";
 }
 
-function buildRevisionDecisionPrompt(request: DraftOrchestrationRequest): string {
-  const currentDraft = normalizeOptionalText(request.currentDraft);
-
+function buildRevisionDecisionPrompt(
+  currentDraft: string,
+  messages: DraftWorkflowMessage[],
+): string {
   if (!currentDraft) {
     throw new AgentError(
       "Revision decisions require a current draft.",
@@ -386,17 +493,12 @@ function buildRevisionDecisionPrompt(request: DraftOrchestrationRequest): string
     );
   }
 
-  const messages = normalizeMessages(request.messages);
-
   return [
     `Prompt version: ${AGENT_PROMPT_VERSION}`,
     `Output contract version: ${REVISION_DECISION_OUTPUT_VERSION}`,
     "Current draft:",
     currentDraft,
-    "Latest user request:",
-    getLatestUserMessage(messages),
-    "Recent conversation:",
-    serializeConversation(messages),
+    buildConversationContextPrompt(toOpenAiMessages(messages)),
   ].join("\n\n");
 }
 
@@ -464,21 +566,17 @@ function parseRevisionDecision(rawOutput: string, responseId: string, model: str
 function buildDraftGenerationPrompt(
   request: DraftOrchestrationRequest,
   operation: Exclude<DraftOperation, "retain">,
+  messages: DraftWorkflowMessage[],
 ): string {
-  const messages = normalizeMessages(request.messages);
-  const latestUserMessage = getLatestUserMessage(messages);
   const currentDraft = normalizeOptionalText(request.currentDraft);
   const sections = [
     `Prompt version: ${AGENT_PROMPT_VERSION}`,
     `Operation: ${operation === "create" ? "Create the first active LinkedIn draft." : "Revise the existing active LinkedIn draft without branching."}`,
-    "Latest user request:",
-    latestUserMessage,
+    buildConversationContextPrompt(toOpenAiMessages(messages)),
     "Voice context:",
     serializeVoiceContext(request.voice),
     "Attached image context:",
     serializeImageContext(request.attachedImage),
-    "Conversation transcript:",
-    serializeConversation(messages),
   ];
 
   if (currentDraft) {
@@ -504,7 +602,10 @@ function buildDraftGenerationPrompt(
 }
 
 export function evaluateDraftReadiness(
-  request: Pick<DraftOrchestrationRequest, "currentDraft" | "messages">,
+  request: {
+    currentDraft?: string | null;
+    messages: OpenAiMessage[];
+  },
 ): DraftReadinessEvaluation {
   const currentDraft = normalizeOptionalText(request.currentDraft);
 
@@ -552,8 +653,11 @@ export async function decideDraftRevision(
   const generateTextImplementation = getGenerateTextImplementation(dependencies);
 
   try {
+    const messages = await resolveMessages(request, dependencies);
+    const currentDraft = normalizeOptionalText(request.currentDraft);
+
     const result = await generateTextImplementation({
-      input: buildRevisionDecisionPrompt(request),
+      input: buildRevisionDecisionPrompt(currentDraft ?? "", messages),
       instructions: REVISION_DECISION_INSTRUCTIONS,
       maxOutputTokens: 120,
       metadata: buildMetadata(request.metadata, "revision-decision", "revise"),
@@ -582,8 +686,13 @@ export async function generateDraft(
   const generateTextImplementation = getGenerateTextImplementation(dependencies);
 
   try {
+    const messages = await resolveMessages(request, dependencies);
+
     if (operation === "create") {
-      const readiness = evaluateDraftReadiness(request);
+      const readiness = evaluateDraftReadiness({
+        currentDraft: request.currentDraft,
+        messages: toOpenAiMessages(messages),
+      });
 
       if (readiness.status !== "ready") {
         throw new AgentError(
@@ -594,7 +703,7 @@ export async function generateDraft(
     }
 
     const result = await generateTextImplementation({
-      input: buildDraftGenerationPrompt(request, operation),
+      input: buildDraftGenerationPrompt(request, operation, messages),
       instructions: DRAFT_GENERATION_INSTRUCTIONS,
       maxOutputTokens: 800,
       metadata: buildMetadata(request.metadata, "generation", operation),
@@ -629,6 +738,11 @@ export async function orchestrateDraft(
   request: DraftOrchestrationRequest,
   dependencies: AgentDependencies = {},
 ): Promise<DraftOrchestrationResult> {
+  const messages = await resolveMessages(request, dependencies);
+  const requestWithMessages: DraftOrchestrationRequest = {
+    ...request,
+    messages: toOpenAiMessages(messages),
+  };
   const currentDraft = normalizeOptionalText(request.currentDraft);
   let decision: RevisionDecision | null = null;
   let stepsTaken = 0;
@@ -636,7 +750,7 @@ export async function orchestrateDraft(
   if (currentDraft) {
     decision = await decideDraftRevision(
       {
-        ...request,
+        ...requestWithMessages,
         currentDraft,
       },
       dependencies,
@@ -660,7 +774,7 @@ export async function orchestrateDraft(
   const operation: Exclude<DraftOperation, "retain"> = currentDraft ? "revise" : "create";
   const generationResult = await generateDraft(
     {
-      ...request,
+      ...requestWithMessages,
       currentDraft,
     },
     operation,

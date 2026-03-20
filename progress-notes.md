@@ -76,6 +76,7 @@ Blocked Feature #F177 Persist imported sample rows — added `lib/voice-samples.
 ✓ Feature #F096 Add readiness evaluation before first draft — done
 ✓ Feature #F034 Add auth bootstrap loading state — done
 ✓ Feature #F036 Add session refresh handling — done
+✓ Feature #F030 Add sidebar profile summary — done
 ✓ Feature #F125 Build conversation context prompt — done
 ✓ Feature #F035 Add auth error messaging — done
 ✓ Feature #F027 Add signed-out route protection — done

@@ -2,14 +2,18 @@ import * as assert from "node:assert/strict";
 import { test } from "node:test";
 
 import type { CreateOpenAiResponseOptions, GenerateTextResult } from "../../../lib/ai.ts";
+import type { DbQueryOptions, DbRow } from "../../../lib/db.ts";
 import {
   AGENT_PROMPT_VERSION,
   AgentError,
+  CHAT_MESSAGE_TABLE,
+  CONVERSATION_CONTEXT_PROMPT_VERSION,
   DRAFT_READINESS_VERSION,
   MAX_AGENT_STEPS,
   MAX_GENERATION_STEPS,
   MIN_MULTI_TURN_READY_USER_WORDS,
   REVISION_DECISION_OUTPUT_VERSION,
+  buildConversationContextPrompt,
   decideDraftRevision,
   evaluateDraftReadiness,
   generateDraft,
@@ -61,6 +65,34 @@ function readStringInput(input: CreateOpenAiResponseOptions["input"]): string {
 
   return input;
 }
+
+test("buildConversationContextPrompt assembles the active thread history into a clean assistant input", () => {
+  const prompt = buildConversationContextPrompt([
+    {
+      content: "Help me draft a LinkedIn post about our onboarding launch.",
+      role: "user",
+    },
+    {
+      content: "What angle matters most?",
+      role: "assistant",
+    },
+    {
+      content: "Focus on cutting onboarding from 14 days to 3 and keep it practical.",
+      role: "user",
+    },
+  ]);
+
+  assert.match(
+    prompt,
+    new RegExp(`Conversation context version: ${CONVERSATION_CONTEXT_PROMPT_VERSION}`),
+  );
+  assert.match(prompt, /Latest user request:/);
+  assert.match(prompt, /Focus on cutting onboarding from 14 days to 3 and keep it practical\./);
+  assert.match(prompt, /Active thread history:/);
+  assert.match(prompt, /1\. USER: Help me draft a LinkedIn post about our onboarding launch\./);
+  assert.match(prompt, /2\. ASSISTANT: What angle matters most\?/);
+  assert.match(prompt, /3\. USER: Focus on cutting onboarding from 14 days to 3 and keep it practical\./);
+});
 
 test("evaluateDraftReadiness marks an explicit first-draft request with topic detail as ready", () => {
   const result = evaluateDraftReadiness({
@@ -185,6 +217,7 @@ test("orchestrateDraft generates a first draft in one bounded step", async () =>
   assert.match(mock.calls[0]?.instructions ?? "", /Never publish, schedule, browse, scrape, import third-party content, or call unsupported third-party tools/i);
   assert.match(mock.calls[0]?.instructions ?? "", /one active draft per thread/i);
   assert.match(readStringInput(mock.calls[0]?.input ?? ""), /Voice context:/);
+  assert.match(readStringInput(mock.calls[0]?.input ?? ""), /Conversation context version: conversation-context-prompt-v1/);
   assert.match(readStringInput(mock.calls[0]?.input ?? ""), /Name: Product Lead/);
   assert.match(readStringInput(mock.calls[0]?.input ?? ""), /Attached image present\./);
   assert.match(
@@ -342,6 +375,91 @@ test("orchestrateDraft revises the existing draft after a revision decision", as
   );
 });
 
+test("orchestrateDraft loads active thread messages from the database once when threadId is provided", async () => {
+  const mock = createGenerateTextMock([
+    {
+      id: "resp_decision_db",
+      model: "gpt-5-mini",
+      outputText:
+        '```json\n{"action":"revise","reason":"The latest user turn asks for a sharper opening."}\n```',
+    },
+    {
+      id: "resp_revision_db",
+      model: "gpt-5",
+      outputText: "We shipped a lean orchestration layer that made every draft decision easier to trust.",
+    },
+  ]);
+  const selectCalls: Array<{ options: unknown; table: string }> = [];
+
+  const result = await orchestrateDraft(
+    {
+      currentDraft: "We built a new orchestration layer for our product.",
+      threadId: " thread-123 ",
+      voice: {
+        name: "Founder",
+      },
+    },
+    {
+      db: {
+        select: async <T extends DbRow = DbRow>(table: string, options?: DbQueryOptions): Promise<T[]> => {
+          selectCalls.push({ options, table });
+
+          return [
+            {
+              content: "We built a new orchestration layer for our product.",
+              created_at: "2026-03-19T12:00:00.000Z",
+              id: "message-1",
+              position: 1,
+              role: "assistant",
+              thread_id: "thread-123",
+            },
+            {
+              content: "Make the opening more confident and specific about trust.",
+              created_at: "2026-03-19T12:01:00.000Z",
+              id: "message-2",
+              position: 2,
+              role: "user",
+              thread_id: "thread-123",
+            },
+          ] as unknown as T[];
+        },
+      },
+      generateText: mock.generateText,
+    },
+  );
+
+  assert.equal(result.status, "generated");
+  assert.equal(result.operation, "revise");
+  assert.equal(selectCalls.length, 1);
+  assert.deepEqual(selectCalls[0], {
+    options: {
+      columns: ["id", "thread_id", "role", "content", "position", "created_at"],
+      filters: [
+        {
+          column: "thread_id",
+          operator: "eq",
+          value: "thread-123",
+        },
+      ],
+      orderBy: [
+        {
+          ascending: true,
+          column: "position",
+        },
+        {
+          ascending: true,
+          column: "created_at",
+        },
+      ],
+    },
+    table: CHAT_MESSAGE_TABLE,
+  });
+  assert.match(readStringInput(mock.calls[0]?.input ?? ""), /1\. ASSISTANT: We built a new orchestration layer for our product\./);
+  assert.match(readStringInput(mock.calls[0]?.input ?? ""), /2\. USER: Make the opening more confident and specific about trust\./);
+  assert.match(readStringInput(mock.calls[1]?.input ?? ""), /Active thread history:/);
+  assert.match(readStringInput(mock.calls[1]?.input ?? ""), /2\. USER: Make the opening more confident and specific about trust\./);
+});
+
 test("orchestrateDraft preserves the current draft when no revision is requested", async () => {
   const mock = createGenerateTextMock([
     {
@@ -456,6 +574,31 @@ test("generateDraft rejects non-workflow message roles", async () => {
       assert.ok(error instanceof AgentError);
       assert.equal(error.code, "invalid-input");
       assert.match(error.message, /roles 'user' or 'assistant'/i);
+      return true;
+    },
+  );
+
+  assert.equal(mock.calls.length, 0);
+});
+
+test("generateDraft rejects thread-backed requests without a database dependency", async () => {
+  const mock = createGenerateTextMock([]);
+
+  await assert.rejects(
+    () =>
+      generateDraft(
+        {
+          threadId: "thread-123",
+        },
+        "create",
+        {
+          generateText: mock.generateText,
+        },
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof AgentError);
+      assert.equal(error.code, "invalid-input");
+      assert.match(error.message, /requires a database dependency/i);
       return true;
     },
   );
