@@ -70,3 +70,4 @@ Blocked Feature #F092 Create draft revisions migration — implementation added 
 ✓ Feature #F210 Implement GET /api/voices route — done
 ✓ Feature #F036 Add session refresh handling — done
 ✓ Feature #F034 Add auth bootstrap loading state — done
+✓ Feature #F096 Add readiness evaluation before first draft — done

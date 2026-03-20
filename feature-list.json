@@ -669,7 +669,7 @@
       "id": "F096",
       "name": "Add readiness evaluation before first draft",
       "description": "Decide when the conversation has enough signal to generate the first post draft.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F005", "F061", "F062"]
     },
     {

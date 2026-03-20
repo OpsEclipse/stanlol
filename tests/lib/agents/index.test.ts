@@ -5,10 +5,13 @@ import type { CreateOpenAiResponseOptions, GenerateTextResult } from "../../../l
 import {
   AGENT_PROMPT_VERSION,
   AgentError,
+  DRAFT_READINESS_VERSION,
   MAX_AGENT_STEPS,
   MAX_GENERATION_STEPS,
+  MIN_MULTI_TURN_READY_USER_WORDS,
   REVISION_DECISION_OUTPUT_VERSION,
   decideDraftRevision,
+  evaluateDraftReadiness,
   generateDraft,
   orchestrateDraft,
 } from "../../../lib/agents/index.ts";
@@ -58,6 +61,69 @@ function readStringInput(input: CreateOpenAiResponseOptions["input"]): string {
 
   return input;
 }
+
+test("evaluateDraftReadiness marks an explicit first-draft request with topic detail as ready", () => {
+  const result = evaluateDraftReadiness({
+    messages: [
+      {
+        content: "Write a LinkedIn post about shipping our internal orchestration layer.",
+        role: "user",
+      },
+    ],
+  });
+
+  assert.deepEqual(result, {
+    missingSignals: [],
+    reason: "explicit-request-with-brief",
+    status: "ready",
+    version: DRAFT_READINESS_VERSION,
+  });
+});
+
+test("evaluateDraftReadiness promotes a multi-turn brief once enough supporting detail is collected", () => {
+  const result = evaluateDraftReadiness({
+    messages: [
+      {
+        content: "Help me draft a LinkedIn post about our onboarding launch.",
+        role: "user",
+      },
+      {
+        content: "What angle matters most?",
+        role: "assistant",
+      },
+      {
+        content:
+          "Focus on cutting onboarding from 14 days to 3, keep it practical, and mention the customer win.",
+        role: "user",
+      },
+    ],
+  });
+
+  assert.deepEqual(result, {
+    missingSignals: [],
+    reason: "multi-turn-brief-collected",
+    status: "ready",
+    version: DRAFT_READINESS_VERSION,
+  });
+});
+
+test("evaluateDraftReadiness asks for more signal when the thread has no concrete draft request", () => {
+  const result = evaluateDraftReadiness({
+    messages: [
+      {
+        content: "I am thinking about our launch and what story to tell.",
+        role: "user",
+      },
+    ],
+  });
+
+  assert.deepEqual(result, {
+    missingSignals: ["draft-intent", "topic-detail"],
+    reason: "missing-draft-intent",
+    status: "needs-more-signal",
+    version: DRAFT_READINESS_VERSION,
+  });
+});
 
 test("orchestrateDraft generates a first draft in one bounded step", async () => {
   const mock = createGenerateTextMock([
@@ -166,6 +232,45 @@ test("generateDraft returns explicit termination metadata for a single-step crea
       stepsTaken: 1,
     },
   });
+});
+
+test("generateDraft rejects a first-draft request before the thread is ready", async () => {
+  const mock = createGenerateTextMock([]);
+
+  await assert.rejects(
+    () =>
+      generateDraft(
+        {
+          messages: [
+            {
+              content: "Write a LinkedIn post.",
+              role: "user",
+            },
+            {
+              content: `Need at least ${MIN_MULTI_TURN_READY_USER_WORDS - 5} words of real brief before drafting.`,
+              role: "assistant",
+            },
+            {
+              content: "Keep helping me think.",
+              role: "user",
+            },
+          ],
+        },
+        "create",
+        {
+          generateText: mock.generateText,
+        },
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof AgentError);
+      assert.equal(error.code, "invalid-input");
+      assert.match(error.message, /needs more signal before creating the first draft/i);
+      assert.match(error.message, /topic-detail/i);
+      return true;
+    },
+  );
+
+  assert.equal(mock.calls.length, 0);
 });
 
 test("orchestrateDraft revises the existing draft after a revision decision", async () => {
