@@ -60,7 +60,7 @@
       "id": "F009",
       "name": "Create app error boundary",
       "description": "Add a top-level error boundary for graceful handling of unexpected UI failures.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": ["F002"]
     },
     {
