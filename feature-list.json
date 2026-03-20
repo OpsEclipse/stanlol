@@ -1446,7 +1446,7 @@
       "id": "F207",
       "name": "Implement GET /api/chat/threads route",
       "description": "Create the route for listing the current user's chat threads.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F006", "F008", "F067"]
     },
     {
