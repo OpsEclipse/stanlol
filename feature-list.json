@@ -46,7 +46,7 @@
       "id": "F007",
       "name": "Create request validation helper",
       "description": "Add reusable input validation utilities for route payloads and query parameters.",
-      "status": "pending",
+      "status": "done",
       "dependencies": ["F002"]
     },
     {
