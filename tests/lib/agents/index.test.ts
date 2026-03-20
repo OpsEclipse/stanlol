@@ -14,6 +14,7 @@ import {
   MIN_MULTI_TURN_READY_USER_WORDS,
   REVISION_DECISION_OUTPUT_VERSION,
   buildConversationContextPrompt,
+  classifyDraftConversationState,
   decideDraftRevision,
   evaluateDraftReadiness,
   generateDraft,
@@ -107,6 +108,7 @@ test("evaluateDraftReadiness marks an explicit first-draft request with topic de
   assert.deepEqual(result, {
     missingSignals: [],
     reason: "explicit-request-with-brief",
+    state: "ready-to-draft",
     status: "ready",
     version: DRAFT_READINESS_VERSION,
   });
@@ -134,6 +136,7 @@ test("evaluateDraftReadiness promotes a multi-turn brief once enough supporting 
   assert.deepEqual(result, {
     missingSignals: [],
     reason: "multi-turn-brief-collected",
+    state: "ready-to-draft",
     status: "ready",
     version: DRAFT_READINESS_VERSION,
   });
@@ -152,6 +155,34 @@ test("evaluateDraftReadiness asks for more signal when the thread has no concret
   assert.deepEqual(result, {
     missingSignals: ["draft-intent", "topic-detail"],
     reason: "missing-draft-intent",
+    state: "exploratory",
+    status: "needs-more-signal",
+    version: DRAFT_READINESS_VERSION,
+  });
+});
+
+test("classifyDraftConversationState keeps low-signal multi-turn threads exploratory until the brief is concrete", () => {
+  const result = classifyDraftConversationState({
+    messages: [
+      {
+        content: "Write a LinkedIn post about our onboarding launch.",
+        role: "user",
+      },
+      {
+        content: "What angle do you want to emphasize?",
+        role: "assistant",
+      },
+      {
+        content: "Still exploring the angle.",
+        role: "user",
+      },
+    ],
+  });
+
+  assert.deepEqual(result, {
+    missingSignals: ["supporting-detail"],
+    reason: "missing-supporting-detail",
+    state: "exploratory",
     status: "needs-more-signal",
     version: DRAFT_READINESS_VERSION,
   });

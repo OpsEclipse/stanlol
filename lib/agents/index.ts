@@ -3,7 +3,7 @@ import type { DbRow, SupabaseDbClient } from "../db.ts";
 
 export const AGENT_PROMPT_VERSION = "draft-orchestration-v1";
 export const CONVERSATION_CONTEXT_PROMPT_VERSION = "conversation-context-prompt-v1";
-export const DRAFT_READINESS_VERSION = "draft-readiness-v1";
+export const DRAFT_READINESS_VERSION = "draft-readiness-v2";
 export const MAX_AGENT_STEPS = 2;
 export const MAX_GENERATION_STEPS = 1;
 export const REVISION_DECISION_OUTPUT_VERSION = "revision-decision-v1";
@@ -14,6 +14,7 @@ export type RevisionDecisionAction = "keep" | "revise";
 export type DraftOperation = "create" | "retain" | "revise";
 export type DraftResultStatus = "generated" | "unchanged";
 export type DraftWorkflowMessageRole = "assistant" | "user";
+export type DraftConversationState = "exploratory" | "ready-to-draft";
 export type DraftReadinessStatus = "needs-more-signal" | "ready";
 export type DraftReadinessMissingSignal =
   | "draft-intent"
@@ -65,6 +66,7 @@ export interface DraftReadinessEvaluation {
     | "missing-draft-intent"
     | "missing-topic-detail"
     | "missing-supporting-detail";
+  state: DraftConversationState;
   status: DraftReadinessStatus;
   version: typeof DRAFT_READINESS_VERSION;
 }
@@ -300,6 +302,7 @@ function createDraftReadinessEvaluation(
   return {
     missingSignals,
     reason,
+    state: status === "ready" ? "ready-to-draft" : "exploratory",
     status,
     version: DRAFT_READINESS_VERSION,
   };
@@ -601,7 +604,7 @@ function buildDraftGenerationPrompt(
   return sections.join("\n\n");
 }
 
-export function evaluateDraftReadiness(
+export function classifyDraftConversationState(
   request: {
     currentDraft?: string | null;
     messages: OpenAiMessage[];
@@ -644,6 +647,15 @@ export function evaluateDraftReadiness(
   return createDraftReadinessEvaluation("needs-more-signal", "missing-supporting-detail", [
     "supporting-detail",
   ]);
+}
+
+export function evaluateDraftReadiness(
+  request: {
+    currentDraft?: string | null;
+    messages: OpenAiMessage[];
+  },
+): DraftReadinessEvaluation {
+  return classifyDraftConversationState(request);
 }
 
 export async function decideDraftRevision(
@@ -689,7 +701,7 @@ export async function generateDraft(
     const messages = await resolveMessages(request, dependencies);
 
     if (operation === "create") {
-      const readiness = evaluateDraftReadiness({
+      const readiness = classifyDraftConversationState({
         currentDraft: request.currentDraft,
         messages: toOpenAiMessages(messages),
       });
