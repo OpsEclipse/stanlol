@@ -102,7 +102,7 @@
       "id": "F015",
       "name": "Create timestamp formatting utility",
       "description": "Add a shared formatter for thread, message, draft, and import timestamps.",
-      "status": "pending",
+      "status": "done",
       "dependencies": []
     },
     {
