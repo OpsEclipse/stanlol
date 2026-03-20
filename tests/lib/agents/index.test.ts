@@ -6,8 +6,10 @@ import {
   AGENT_PROMPT_VERSION,
   AgentError,
   MAX_AGENT_STEPS,
+  MAX_GENERATION_STEPS,
   REVISION_DECISION_OUTPUT_VERSION,
   decideDraftRevision,
+  generateDraft,
   orchestrateDraft,
 } from "../../../lib/agents/index";
 
@@ -103,7 +105,7 @@ test("orchestrateDraft generates a first draft in one bounded step", async () =>
     status: "generated",
     termination: {
       maxSteps: MAX_AGENT_STEPS,
-      reason: "draft-generated",
+      reason: "draft-created",
       stepsTaken: 1,
     },
   });
@@ -119,8 +121,49 @@ test("orchestrateDraft generates a first draft in one bounded step", async () =>
   assert.match(readStringInput(mock.calls[0]?.input ?? ""), /Attached image present\./);
   assert.match(
     readStringInput(mock.calls[0]?.input ?? ""),
+    /Termination condition: after producing the first active draft, stop\./,
+  );
+  assert.match(
+    readStringInput(mock.calls[0]?.input ?? ""),
     /A teammate presenting the launch slide/,
   );
+});
+
+test("generateDraft returns explicit termination metadata for a single-step create flow", async () => {
+  const mock = createGenerateTextMock([
+    {
+      id: "resp_create_direct",
+      model: "gpt-5",
+      outputText: "We replaced vague AI loops with a single draft handoff the team can audit.",
+    },
+  ]);
+
+  const result = await generateDraft(
+    {
+      messages: [
+        {
+          content: "Write a LinkedIn post about making agent termination explicit.",
+          role: "user",
+        },
+      ],
+    },
+    "create",
+    {
+      generateText: mock.generateText,
+    },
+  );
+
+  assert.deepEqual(result, {
+    draftText: "We replaced vague AI loops with a single draft handoff the team can audit.",
+    model: "gpt-5",
+    operation: "create",
+    responseId: "resp_create_direct",
+    termination: {
+      maxSteps: MAX_GENERATION_STEPS,
+      reason: "draft-created",
+      stepsTaken: 1,
+    },
+  });
 });
 
 test("orchestrateDraft revises the existing draft after a revision decision", async () => {
@@ -164,6 +207,7 @@ test("orchestrateDraft revises the existing draft after a revision decision", as
   assert.equal(result.operation, "revise");
   assert.equal(result.draftText, "We shipped a lean orchestration layer that made every draft decision easier to trust.");
   assert.equal(result.responseId, "resp_revision");
+  assert.equal(result.termination.reason, "draft-revised");
   assert.equal(result.termination.stepsTaken, 2);
   assert.deepEqual(result.decision, {
     action: "revise",
@@ -181,6 +225,10 @@ test("orchestrateDraft revises the existing draft after a revision decision", as
   assert.equal(mock.calls[1]?.metadata?.agent_operation, "revise");
   assert.match(readStringInput(mock.calls[1]?.input ?? ""), /Current draft:/);
   assert.match(readStringInput(mock.calls[1]?.input ?? ""), /Make the opening more confident/);
+  assert.match(
+    readStringInput(mock.calls[1]?.input ?? ""),
+    /Termination condition: after revising the current active draft once, stop\./,
+  );
 });
 
 test("orchestrateDraft preserves the current draft when no revision is requested", async () => {

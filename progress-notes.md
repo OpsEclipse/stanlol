@@ -27,4 +27,5 @@ Blocked Feature #F017 Create local-only feature flag helper — implementation a
 ✓ Feature #F011 Create empty state primitives — done
 ✓ Feature #F037 Add unauthorized API response behavior — done
 ✓ Feature #F124 Build system prompt from product boundaries — done
+✓ Feature #F129 Add explicit agent termination conditions — done
 ✓ Feature #F133 Create structured generation result contract — done
